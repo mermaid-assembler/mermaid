@@ -1,0 +1,19 @@
+#ifndef _BASE_H_
+#define _BASE_H_
+
+#include <boost/cstdint.hpp>
+
+#include "exceptions.h"
+
+namespace BASE {
+    enum base { A = 0, C, G, T, N };
+    const uint8_t NUM_BASES = 4;
+
+    base char2base(char c);
+    char base2char(base b);
+    base inv_base(base b);
+    char inv_base(char c);
+    bool validate_base(base b);
+}
+
+#endif /* _BASE_H_ */
