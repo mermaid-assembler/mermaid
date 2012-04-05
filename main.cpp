@@ -397,7 +397,7 @@ int main(int argc, char* argv[])
     build_map(reader, kmer_map, world);
 
     char outname[100];
-    sprintf(outname, "%s.%d\n", argv[1], world.rank());
+    sprintf(outname, "%s.%d", argv[1], world.rank());
     FILE* outfile = fopen(outname, "w");
     distrib_print_ufx(outfile, kmer_map);
     fclose(outfile);
