@@ -29,6 +29,7 @@ void kmer2str(char* str, kmer_t kmer, k_t len, k_t start)
     for_base_in_kmer_from(b, kmer, len, start) {
         str[b_i_] = base2char(b);
     } end_for;
+    str[len] = '\0';
 }
 
 void revcmp_kmer(kmer_t dst, kmer_t src, k_t len)
