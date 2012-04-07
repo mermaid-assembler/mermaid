@@ -37,7 +37,7 @@ typedef struct qual_counts {
 } qual_counts_t;
 
 /* Packed structure for representing UFX for both left and right */
-typedef struct extensions {
+typedef struct {
     union
     {
         struct
@@ -51,13 +51,13 @@ typedef struct extensions {
             unsigned int rC:1;
             unsigned int rA:1;
         };
-        uint8_t ext;
+        uint8_t bitmap;
     };
-} extensions_t;
+} ext_t;
 
-/* Combined extensions_t and kmer */
+/* Combined ext_t and kmer */
 typedef struct ekmer {
-    extensions_t ext;
+    ext_t ext;
     kmer_a kmer[0];
 } __attribute__((packed)) ekmer_t;
 
