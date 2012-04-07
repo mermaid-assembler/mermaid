@@ -32,8 +32,8 @@ typedef struct qkmer {
 } __attribute__((packed)) qkmer_t;
 
 typedef struct qual_counts {
-    uint8_t lquals[BASE::NUM_BASES];
-    uint8_t rquals[BASE::NUM_BASES];
+    count_t lquals[BASE::NUM_BASES];
+    count_t rquals[BASE::NUM_BASES];
 } qual_counts_t;
 
 /* Packed structure for representing UFX for both left and right */
