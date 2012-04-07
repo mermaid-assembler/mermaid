@@ -174,32 +174,32 @@ void build_map(FastQReader* r, HashMap<kmer_t, qual_counts_t>& kmer_map, mpi::co
     free(recv_qkmer);
 }
 
-static inline bool check_hq_ext(ext_t ext)
+static inline bool check_hq_extensions(extensions_t extensions)
 {
-    /* This kind of assumes that ext_t := uint8 */
-    return ext.bitmap != 0;
+    /* This kind of assumes that extensions_t := uint8 */
+    return extensions.ext != 0;
     /*
-    return ext.lA || ext.lC || ext.lG || ext.lT ||
-           ext.rA || ext.rC || ext.rG || ext.rT;
+    return extensions.lA || extensions.lC || extensions.lG || extensions.lT ||
+           extensions.rA || extensions.rC || extensions.rG || extensions.rT;
     */
 }
 
-ext_t qual_counts_2_ext(qual_counts_t* qual_counts)
+extensions_t qual_counts_2_extensions(qual_counts_t* qual_counts)
 {
-    ext_t ext;
-    ext.bitmap = 0;
+    extensions_t ext;
+    ext.ext = 0;
     for (uint8_t i = 0; i < BASE::NUM_BASES; i++) {
         if (qual_counts->lquals[i] >= D_MIN) {
-            ext.bitmap |= 1 << (4 + i);
+            ext.ext |= 1 << (4 + i);
         }
         if (qual_counts->rquals[i] >= D_MIN) {
-            ext.bitmap |= 1 << i;
+            ext.ext |= 1 << i;
         }
     }
     return ext;
 }
 
-void gather_kmers(HashMap<kmer_t, ext_t>& all_kmer_map,
+void gather_kmers(HashMap<kmer_t, extensions_t>& all_kmer_map,
         HashMap<kmer_t, qual_counts_t>& kmer_map, mpi::communicator& world)
 {
     ekmer_t* send_ekmer = (ekmer_t*) malloc(ekmer_size(k));
@@ -220,17 +220,17 @@ void gather_kmers(HashMap<kmer_t, ext_t>& all_kmer_map,
         if (it != kmer_map.map.end()) {
             const kmer_t& kmer = it->first;
             qual_counts_t& qual_counts = it->second;
-            ext_t ext = qual_counts_2_ext(&qual_counts);
+            extensions_t extensions = qual_counts_2_extensions(&qual_counts);
 
-            if (check_hq_ext(ext)) {
+            if (check_hq_extensions(extensions)) {
                 if (world.rank() == 0) {
                     all_kmer_map.try_insert(kmer);
-                    all_kmer_map.map[kmer] = ext;
+                    all_kmer_map.map[kmer] = extensions;
                 } else {
                     for_base_in_kmer(b, kmer, k) {
                         set_base(send_ekmer->kmer, b_i_, b);
                     } end_for;
-                    send_ekmer->ext = ext;
+                    send_ekmer->ext = extensions;
                     nethub.send(0, send_ekmer);
                 }
             }
@@ -275,16 +275,16 @@ void distrib_print_ufx(FILE* outfile, HashMap<kmer_t, qual_counts_t> kmer_map)
             it++) {
         const kmer_t& kmer = it->first;
         qual_counts_t& qual_counts = it->second;
-        ext_t ext = qual_counts_2_ext(&qual_counts);
+        extensions_t extensions = qual_counts_2_extensions(&qual_counts);
 
-        if (!check_hq_ext(ext))
+        if (!check_hq_extensions(extensions))
             continue;
 
         char left_ext = 0;
         char right_ext = 0;
 
         for (uint8_t i = 0; i < BASE::NUM_BASES; i++) {
-            if (ext.bitmap & 1 << (BASE::NUM_BASES + i)) {
+            if (extensions.ext & 1 << (BASE::NUM_BASES + i)) {
                 if (left_ext)
                     left_ext = 'F';
                 else 
@@ -295,7 +295,7 @@ void distrib_print_ufx(FILE* outfile, HashMap<kmer_t, qual_counts_t> kmer_map)
             left_ext = 'X';
 
         for (uint8_t i = 0; i < BASE::NUM_BASES; i++) {
-            if (ext.bitmap & 1 << i) {
+            if (extensions.ext & 1 << i) {
                 if (right_ext)
                     right_ext = 'F';
                 else 
@@ -326,9 +326,9 @@ void distrib_print_ufx(FILE* outfile, HashMap<kmer_t, qual_counts_t> kmer_map)
 
 }
 
-void print_ufxs(FILE* outfile, HashMap<kmer_t, ext_t>& all_kmer_map)
+void print_ufxs(FILE* outfile, HashMap<kmer_t, extensions_t>& all_kmer_map)
 {
-    for (HashMap<kmer_t, ext_t>::map_type_t::iterator it = all_kmer_map.map.begin();
+    for (HashMap<kmer_t, extensions_t>::map_type_t::iterator it = all_kmer_map.map.begin();
             it != all_kmer_map.map.end();
             it++) {
 
@@ -336,7 +336,7 @@ void print_ufxs(FILE* outfile, HashMap<kmer_t, ext_t>& all_kmer_map)
         char right_ext = 0;
 
         for (uint8_t i = 0; i < BASE::NUM_BASES; i++) {
-            if (it->second.bitmap & 1 << (BASE::NUM_BASES + i)) {
+            if (it->second.ext & 1 << (BASE::NUM_BASES + i)) {
                 if (left_ext)
                     left_ext = 'F';
                 else 
@@ -347,7 +347,7 @@ void print_ufxs(FILE* outfile, HashMap<kmer_t, ext_t>& all_kmer_map)
             left_ext = 'X';
 
         for (uint8_t i = 0; i < BASE::NUM_BASES; i++) {
-            if (it->second.bitmap & 1 << i) {
+            if (it->second.ext & 1 << i) {
                 if (right_ext)
                     right_ext = 'F';
                 else 
@@ -401,7 +401,7 @@ int main(int argc, char* argv[])
     FILE* outfile = fopen(outname, "w");
     distrib_print_ufx(outfile, kmer_map);
     fclose(outfile);
-    //HashMap<kmer_t, ext_t> all_kmer_map(INITIAL_CAPACITY, 0,
+    //HashMap<kmer_t, extensions_t> all_kmer_map(INITIAL_CAPACITY, 0,
     //        (hash_map_hash_func_t) kmer_hash_K, (hash_map_eq_func_t) kmer_eq_K,
     //        kmer_size(k));
     //gather_kmers(all_kmer_map, kmer_map, world);
