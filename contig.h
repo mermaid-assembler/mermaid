@@ -17,7 +17,7 @@ public:
 
 protected:
     std::vector<kmer_t> subcontigs;
-    uint32_t len;
+    size_t len;
 };
 
 #endif /* _CONTIG_H_ */

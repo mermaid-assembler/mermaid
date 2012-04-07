@@ -31,10 +31,11 @@ typedef struct qkmer {
     kmer_a kmer[0];
 } __attribute__((packed)) qkmer_t;
 
-typedef struct qual_counts {
+typedef struct {
     count_t lquals[BASE::NUM_BASES];
     count_t rquals[BASE::NUM_BASES];
-} qual_counts_t;
+    uint32_t contig_idx;
+} kmer_info_t;
 
 /* Packed structure for representing UFX for both left and right */
 typedef struct extensions {

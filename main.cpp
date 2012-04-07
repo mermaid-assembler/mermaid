@@ -12,6 +12,7 @@
 #include "config.h"
 #include "hash_map.h"
 #include "scalable_bloom_filter.h"
+#include "contig.h"
 
 using namespace std;
 namespace mpi = boost::mpi;
@@ -103,7 +104,7 @@ FastQReader* get_reader(int argc, char* argv[], mpi::communicator& world, k_t k)
     return reader;
 }
 
-void build_map(FastQReader* r, HashMap<kmer_t, qual_counts_t>& kmer_map, mpi::communicator& world)
+void build_map(FastQReader* r, HashMap<kmer_t, kmer_info_t>& kmer_map, mpi::communicator& world)
 {
     NetHub nethub(world, qkmer_size(k+2));
 
@@ -174,6 +175,21 @@ void build_map(FastQReader* r, HashMap<kmer_t, qual_counts_t>& kmer_map, mpi::co
     free(recv_qkmer);
 }
 
+/* Return a single byte which represents a bitmap for valid extensions. */
+/* TODO - Explain this function more... */
+uint8_t get_ext_map(kmer_info_t* kmer_info)
+{
+    uint8_t ext_map = 0;
+
+    for (uint8_t i = 0; i < BASE::NUM_BASES; i++) {
+        if (kmer_info->lquals[i] >= D_MIN)
+            ext_map |= 1 << (BASE::NUM_BASES + i);
+        if (kmer_info->rquals[i] >= D_MIN)
+            ext_map |= 1 << i;
+    }
+    return ext_map;
+}
+
 static inline bool check_hq_extensions(extensions_t extensions)
 {
     /* This kind of assumes that extensions_t := uint8 */
@@ -184,7 +200,7 @@ static inline bool check_hq_extensions(extensions_t extensions)
     */
 }
 
-extensions_t qual_counts_2_extensions(qual_counts_t* qual_counts)
+extensions_t qual_counts_2_extensions(kmer_info_t* qual_counts)
 {
     extensions_t ext;
     ext.ext = 0;
@@ -200,7 +216,7 @@ extensions_t qual_counts_2_extensions(qual_counts_t* qual_counts)
 }
 
 void gather_kmers(HashMap<kmer_t, extensions_t>& all_kmer_map,
-        HashMap<kmer_t, qual_counts_t>& kmer_map, mpi::communicator& world)
+        HashMap<kmer_t, kmer_info_t>& kmer_map, mpi::communicator& world)
 {
     ekmer_t* send_ekmer = (ekmer_t*) malloc(ekmer_size(k));
     ekmer_t* recv_ekmer = (ekmer_t*) malloc(ekmer_size(k));
@@ -215,11 +231,11 @@ void gather_kmers(HashMap<kmer_t, extensions_t>& all_kmer_map,
     bool done_sending = false;
     bool all_done = false;
 
-    HashMap<kmer_t, qual_counts_t>::map_type_t::iterator it = kmer_map.map.begin();
+    HashMap<kmer_t, kmer_info_t>::map_type_t::iterator it = kmer_map.map.begin();
     while (!all_done) {
         if (it != kmer_map.map.end()) {
             const kmer_t& kmer = it->first;
-            qual_counts_t& qual_counts = it->second;
+            kmer_info_t& qual_counts = it->second;
             extensions_t extensions = qual_counts_2_extensions(&qual_counts);
 
             if (check_hq_extensions(extensions)) {
@@ -268,13 +284,13 @@ void gather_kmers(HashMap<kmer_t, extensions_t>& all_kmer_map,
     free(recv_ekmer);
 }
 
-void distrib_print_ufx(FILE* outfile, HashMap<kmer_t, qual_counts_t> kmer_map)
+void distrib_print_ufx(FILE* outfile, HashMap<kmer_t, kmer_info_t> kmer_map)
 {
-    for (HashMap<kmer_t, qual_counts_t>::map_type_t::iterator it = kmer_map.map.begin();
+    for (HashMap<kmer_t, kmer_info_t>::map_type_t::iterator it = kmer_map.map.begin();
             it != kmer_map.map.end();
             it++) {
         const kmer_t& kmer = it->first;
-        qual_counts_t& qual_counts = it->second;
+        kmer_info_t& qual_counts = it->second;
         extensions_t extensions = qual_counts_2_extensions(&qual_counts);
 
         if (!check_hq_extensions(extensions))
@@ -377,6 +393,20 @@ void print_ufxs(FILE* outfile, HashMap<kmer_t, extensions_t>& all_kmer_map)
     }
 }
 
+void build_contigs(vector<Contig*>& contigs, HashMap<kmer_t, kmer_info_t> kmer_map)
+{
+    for (HashMap<kmer_t, kmer_info_t>::map_type_t::iterator it = kmer_map.map.begin();
+            it != kmer_map.map.end();
+            it++) {
+        const kmer_t& kmer = it->first;
+        kmer_info_t& kmer_info = it->second;
+        //extensions_t extensions = qual_counts_2_extensions(&kmer_info);
+
+        //if (!check_hq_extensions(extensions))
+        //    continue;
+    }
+}
+
 int main(int argc, char* argv[])
 {
     mpi::environment env(argc, argv);
@@ -391,7 +421,7 @@ int main(int argc, char* argv[])
 
     vector<string> prefix_boundaries;
 
-    HashMap<kmer_t, qual_counts_t> kmer_map(INITIAL_CAPACITY, 0,
+    HashMap<kmer_t, kmer_info_t> kmer_map(INITIAL_CAPACITY, 0,
             (hash_map_hash_func_t) kmer_hash_K, (hash_map_eq_func_t) kmer_eq_K,
             kmer_size(k));
     build_map(reader, kmer_map, world);
