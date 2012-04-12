@@ -1,6 +1,6 @@
 #include "config.h"
 #include "kmer.h"
-#include "kmer_count_store.h"
+#include "distributed_kmer_store.h"
 #include "utils.h"
 
 #define FILTER_ON 0
@@ -8,7 +8,7 @@
 /* FIXME - Change this initial capacity using preprocessing step. */
 static const int INITIAL_CAPACITY = 100000;
 
-KmerCountStore::KmerCountStore(k_t k)
+DistributedKmerStore::DistributedKmerStore(k_t k)
     : k(k),
     kmer_filter(INITIAL_CAPACITY, 0.001, 0,
             (bloom_filter_hash_func_t) kmer_hash_K),
@@ -19,7 +19,7 @@ KmerCountStore::KmerCountStore(k_t k)
             (hash_map_eq_func_t) kmer_eq_K, kmer_size(k));
 }
 
-void KmerCountStore::insert(qekmer_t* qekmer)
+void DistributedKmerStore::insert(qekmer_t* qekmer)
 {
 #if FILTER_ON
     if (!kmer_filter.check(qekmer->kmer)) {
@@ -51,7 +51,7 @@ static ext_map_t get_ext_map(qual_counts_t& qual_counts)
     return ext_map;
 }
 
-void KmerCountStore::trim()
+void DistributedKmerStore::trim()
 {
     contig_map = new HashMap<kmer_t, kmer_info_t>(INITIAL_CAPACITY, 0,
             (hash_map_hash_func_t) kmer_hash_K,
@@ -77,7 +77,7 @@ void KmerCountStore::trim()
     counts_map = NULL;
 }
 
-void KmerCountStore::print_ufx(FILE* outfile)
+void DistributedKmerStore::print_ufx(FILE* outfile)
 {
     if (contig_map == NULL) {
         panic("You have not called trim on the kmer count store\n");
@@ -156,7 +156,7 @@ static base ext_map_side2base(uint8_t side)
     panic("Given ext_map side didn't have any bits set in %s\n", __func__);
 }
 
-void KmerCountStore::build_contig(int32_t contig_idx, Contig* contig, kmer_t beg_kmer, kmer_info_t& beg_kmer_info)
+void DistributedKmerStore::build_contig(int32_t contig_idx, Contig* contig, kmer_t beg_kmer, kmer_info_t& beg_kmer_info)
 {
     if (!can_use_in_contig(beg_kmer_info))
         return;
@@ -210,7 +210,7 @@ void KmerCountStore::build_contig(int32_t contig_idx, Contig* contig, kmer_t beg
     }
 }
 
-void KmerCountStore::build_contigs(std::vector<Contig*> contigs)
+void DistributedKmerStore::build_contigs(std::vector<Contig*> contigs)
 {
     contigs.push_back(new Contig());
     size_t contig_idx = 0;
@@ -234,7 +234,7 @@ void KmerCountStore::build_contigs(std::vector<Contig*> contigs)
 /* TODO - Version of build_contig which doesn't constantly copy the next kmer
  * into a temporary buffer. */
 #if 0
-void KmerCountStore::build_contig(int32_t contig_idx, Contig* contig, const kmer_t& beg_kmer, kmer_info_t& beg_kmer_info)
+void DistributedKmerStore::build_contig(int32_t contig_idx, Contig* contig, const kmer_t& beg_kmer, kmer_info_t& beg_kmer_info)
 {
     if (!can_use_in_contig(beg_kmer_info))
         return;
