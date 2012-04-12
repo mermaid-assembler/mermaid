@@ -89,10 +89,6 @@ void KmerCountStore::print_ufx(FILE* outfile)
         const kmer_t& kmer = it->first;
         kmer_info_t& kmer_info = it->second;
 
-        if (kmer_matches_str(kmer, "AAAAAACCTTACACACAGTGTTTTCTTTATTAGAAACTATT",
-                    K)) {
-            printf("%x %x\n", kmer_info.ext_map.left, kmer_info.ext_map.right);
-        }
         char left_ext = 0;
         char right_ext = 0;
 

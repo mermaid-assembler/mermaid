@@ -60,9 +60,9 @@ void canonize_qekmer(qekmer_t* qekmer, k_t k)
     if (cmp_kmer(qekmer->kmer, revcmp, k) > 0) {
         memcpy(qekmer->kmer, revcmp, kmer_size(k));
         qual_t tmp_qual = qekmer->lqual;
-        uint8_t tmp_ext = qekmer->exts.left;
+        base tmp_ext = inv_base((base) qekmer->exts.left);
         qekmer->lqual = qekmer->rqual;
-        qekmer->exts.left = qekmer->exts.right;
+        qekmer->exts.left = inv_base((base) qekmer->exts.right);
         qekmer->rqual = tmp_qual;
         qekmer->exts.right = tmp_ext;
     }
