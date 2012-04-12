@@ -1,9 +1,12 @@
 #ifndef _KMER_COUNT_STORE_H_
 #define _KMER_COUNT_STORE_H_
 
+#include <vector>
+
 #include "kmer.h"
 #include "hash_map.h"
 #include "scalable_bloom_filter.h"
+#include "contig.h"
 
 typedef struct {
     count_t lquals[BASE::NUM_BASES];

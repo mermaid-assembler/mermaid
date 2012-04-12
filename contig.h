@@ -7,7 +7,7 @@
 
 #include "kmer.h"
 
-const size_t SUBCONTIG_LEN = 40000;         /* Length in bases */
+const size_t SUBCONTIG_LEN = 4000;         /* Length in bases */
 
 class Contig {
 public:
@@ -18,6 +18,7 @@ public:
 protected:
     std::vector<kmer_t> subcontigs;
     size_t len;
+    int32_t next_contig_id;
 };
 
 #endif /* _CONTIG_H_ */

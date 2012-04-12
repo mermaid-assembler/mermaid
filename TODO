@@ -1,4 +1,3 @@
 * go from 4-bit -> 2-bit
 * Make it so that not all the files have to be present for each node
-* Change qekmer representation to have kmer (byte-aligned) & separate extensions
 * Delete kmers from hash table as we gather
