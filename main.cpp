@@ -352,17 +352,18 @@ int main(int argc, char* argv[])
 
     FastQReader* reader = get_reader(argc - 2, &argv[2], world, k);
 
-    vector<string> prefix_boundaries;
-
     KmerCountStore kmer_store(k);
     build_store(reader, kmer_store, world);
     kmer_store.trim();
 
-    char outname[100];
-    sprintf(outname, "%s.%d", argv[1], world.rank());
-    FILE* outfile = fopen(outname, "w");
-    kmer_store.print_ufx(outfile);
-    fclose(outfile);
+    vector<Contig*> contigs;
+    kmer_store.build_contigs(contigs);
+
+    //char outname[100];
+    //sprintf(outname, "%s.%d", argv[1], world.rank());
+    //FILE* outfile = fopen(outname, "w");
+    //kmer_store.print_ufx(outfile);
+    //fclose(outfile);
 
     //if (world.rank() == 0) {
     //    FILE* outfile = fopen(argv[1], "w");

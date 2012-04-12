@@ -35,39 +35,11 @@ typedef struct {
     kmer_a kmer[0];
 } __attribute__((packed)) qekmer_t;
 
-/* Packed structure for representing UFX for both left and right */
-typedef struct extensions {
-    union
-    {
-        struct
-        {
-            unsigned int lT:1;
-            unsigned int lG:1;
-            unsigned int lC:1;
-            unsigned int lA:1;
-            unsigned int rT:1;
-            unsigned int rG:1;
-            unsigned int rC:1;
-            unsigned int rA:1;
-        };
-        uint8_t ext;
-    };
-} extensions_t;
-
-/* Combined extensions_t and kmer */
-typedef struct ekmer {
-    extensions_t ext;
-    kmer_a kmer[0];
-} __attribute__((packed)) ekmer_t;
-
 #define kmer_size(len) \
     (((len) + BASES_PER_BYTE - 1) / BASES_PER_BYTE)
 
 #define qekmer_size(len) \
     (sizeof(qekmer_t) + kmer_size(len))
-
-#define ekmer_size(len) \
-    (sizeof(ekmer_t) + kmer_size(len))
 
 /* WARNING: This function does not check its parameters for correct input. */
 #define get_base(kmer, i) \
