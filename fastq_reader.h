@@ -26,9 +26,7 @@ public:
     void set_max_byte(uintmax_t max_byte);
     uintmax_t tell(void);
     bool next_file();
-    /* WARNING: This function must be passed the actual k-value because it will
-     * return a k+2-mer. */
-    bool read_next(qkmer_t* qkmer);
+    bool read_next(qekmer_t* qekmer);
 
 protected:
     void seek_to_next_read();

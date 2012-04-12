@@ -1,6 +1,8 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
+#include <boost/cstdint.hpp>
+
 typedef uint32_t k_t;
 
 const uint8_t Q_MIN = 19;   /* Minimum quality threshold. */

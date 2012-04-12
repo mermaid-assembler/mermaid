@@ -25,17 +25,15 @@ typedef uint8_t kmer_a;     /* This type should be used for declaring arrays
 typedef uint8_t qual_t;
 typedef uint32_t count_t;
 
-typedef struct qkmer {
+typedef struct {
     qual_t lqual;
     qual_t rqual;
+    struct {
+        uint8_t left : 4;
+        uint8_t right : 4;
+    } exts;
     kmer_a kmer[0];
-} __attribute__((packed)) qkmer_t;
-
-typedef struct {
-    count_t lquals[BASE::NUM_BASES];
-    count_t rquals[BASE::NUM_BASES];
-    uint32_t contig_idx;
-} kmer_info_t;
+} __attribute__((packed)) qekmer_t;
 
 /* Packed structure for representing UFX for both left and right */
 typedef struct extensions {
@@ -65,8 +63,8 @@ typedef struct ekmer {
 #define kmer_size(len) \
     (((len) + BASES_PER_BYTE - 1) / BASES_PER_BYTE)
 
-#define qkmer_size(len) \
-    (sizeof(qkmer_t) + kmer_size(len))
+#define qekmer_size(len) \
+    (sizeof(qekmer_t) + kmer_size(len))
 
 #define ekmer_size(len) \
     (sizeof(ekmer_t) + kmer_size(len))

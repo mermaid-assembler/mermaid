@@ -10,15 +10,13 @@
 #include "fastq_reader.h"
 #include "nethub.h"
 #include "config.h"
-#include "hash_map.h"
-#include "scalable_bloom_filter.h"
+#include "kmer_count_store.h"
 #include "contig.h"
 
 using namespace std;
 namespace mpi = boost::mpi;
 namespace fs  = boost::filesystem;
 
-#define FILTER_ON 0
 
 #define KMER_BUFFER_SIZE 1024
 #define KMER_TAG 0
@@ -27,65 +25,59 @@ namespace fs  = boost::filesystem;
 
 static const k_t k = K;
 
-/* FIXME - Change this initial capacity using preprocessing step. */
-static const int INITIAL_CAPACITY = 100000;
-
-int get_kmer_bin(qkmer_t* qkmer, k_t k, int world_size)
+int get_kmer_bin(qekmer_t* qekmer, k_t k, int world_size)
 {
-    base b;
-    kmer_a kmer[kmer_size(k)];
-    for_base_in_kmer_from(b, qkmer->kmer, k, 1) {
-        set_base(kmer, b_i_, b);
-    } end_for;
-    size_t hash = kmer_hash(0, kmer, k);
+    size_t hash = kmer_hash(0, qekmer->kmer, k);
     return hash % world_size;
 }
 
-/* Checks to see if the qkmer meets the criteria to being sent. For example,
+/* Checks to see if the qekmer meets the criteria to being sent. For example,
  * this function checks to make sure that the kmer does not contain an 'N'
  * anywhere in the kmer.
  */
-bool check_qkmer_qual(qkmer_t* qkmer, k_t k)
+bool check_qekmer_qual(qekmer_t* qekmer, k_t k)
 {
     base b;
-    for_base_in_kmer_from(b, qkmer->kmer, k, 1) {
+    for_base_in_kmer(b, qekmer->kmer, k) {
         if (b == BASE::N)
             return false;
     } end_for;
 
-    if (get_base(qkmer->kmer, 0) == BASE::N &&
-            get_base(qkmer->kmer, k + 1) == BASE::N)
+    if (qekmer->exts.left == BASE::N && qekmer->exts.right == BASE::N)
         return false;
 
-    if (qkmer->lqual <= Q_MIN && qkmer->rqual <= Q_MIN)
+    if (qekmer->lqual <= Q_MIN && qekmer->rqual <= Q_MIN)
         return false;
 
     return true;
 }
 
-/* Sets the qkmer to the canonical qkmer. */
-void canonize_qkmer(qkmer_t* qkmer, k_t k)
+/* Sets the qekmer to the canonical qekmer. */
+void canonize_qekmer(qekmer_t* qekmer, k_t k)
 {
-    kmer_a revcmp[kmer_size(k + 2)];
-    revcmp_kmer(revcmp, qkmer->kmer, k + 2);
-    if (cmp_kmer(qkmer->kmer, revcmp, k, 1, 1) > 0) {
-        memcpy(qkmer->kmer, revcmp, kmer_size(k + 2));
-        qual_t tmp = qkmer->lqual;
-        qkmer->lqual = qkmer->rqual;
-        qkmer->rqual = tmp;
+    kmer_a revcmp[kmer_size(k)];
+    revcmp_kmer(revcmp, qekmer->kmer, k);
+    if (cmp_kmer(qekmer->kmer, revcmp, k) > 0) {
+        memcpy(qekmer->kmer, revcmp, kmer_size(k));
+        qual_t tmp_qual = qekmer->lqual;
+        uint8_t tmp_ext = qekmer->exts.left;
+        qekmer->lqual = qekmer->rqual;
+        qekmer->exts.left = qekmer->exts.right;
+        qekmer->rqual = tmp_qual;
+        qekmer->exts.right = tmp_ext;
     }
 }
 
 /* Replaces endings with N's to A's with 0 qual score. */
-void clean_qkmer(qkmer_t* qkmer, k_t k)
+void clean_qekmer(qekmer_t* qekmer, k_t k)
 {
-    if (get_base(qkmer->kmer, 0) == BASE::N) {
-        set_base(qkmer->kmer, 0, BASE::A);
-        qkmer->lqual = 0;
+    if (qekmer->exts.left == BASE::N) {
+        qekmer->exts.left = BASE::A;
+        qekmer->lqual = 0;
     }
-    if (get_base(qkmer->kmer, k+1) == BASE::N) {
-        set_base(qkmer->kmer, k+1, BASE::A);
-        qkmer->rqual = 0;
+    if (qekmer->exts.right == BASE::N) {
+        qekmer->exts.right = BASE::A;
+        qekmer->rqual = 0;
     }
 }
 
@@ -104,12 +96,9 @@ FastQReader* get_reader(int argc, char* argv[], mpi::communicator& world, k_t k)
     return reader;
 }
 
-void build_map(FastQReader* r, HashMap<kmer_t, kmer_info_t>& kmer_map, mpi::communicator& world)
+void build_store(FastQReader* r, KmerCountStore& kmer_store, mpi::communicator& world)
 {
-    NetHub nethub(world, qkmer_size(k+2));
-
-    ScalableBloomFilter kmer_filter(INITIAL_CAPACITY, 0.001, 0,
-            (bloom_filter_hash_func_t) kmer_hash_K);
+    NetHub nethub(world, qekmer_size(k));
 
     bool node_done[world.size()]; // Stores the non-blocking receive requests
     for (int i = 0; i < world.size(); i++) {
@@ -118,18 +107,16 @@ void build_map(FastQReader* r, HashMap<kmer_t, kmer_info_t>& kmer_map, mpi::comm
     bool done_reading = false;
     bool all_done = false;
 
-    qkmer_t* send_qkmer = (qkmer_t*) malloc(qkmer_size(k + 2));
-    qkmer_t* recv_qkmer = (qkmer_t*) malloc(qkmer_size(k + 2));
-    base b;
-    kmer_a recv_kmer[kmer_size(k)];
+    qekmer_t* send_qekmer = (qekmer_t*) malloc(qekmer_size(k));
+    qekmer_t* recv_qekmer = (qekmer_t*) malloc(qekmer_size(k));
 
     while (!all_done) {
-        if (r->read_next(send_qkmer)) {
-            if (check_qkmer_qual(send_qkmer, k)) {
-                canonize_qkmer(send_qkmer, k);
-                clean_qkmer(send_qkmer, k);
-                int node_id = get_kmer_bin(send_qkmer, k, world.size());
-                nethub.send(node_id, send_qkmer);
+        if (r->read_next(send_qekmer)) {
+            if (check_qekmer_qual(send_qekmer, k)) {
+                canonize_qekmer(send_qekmer, k);
+                clean_qekmer(send_qekmer, k);
+                int node_id = get_kmer_bin(send_qekmer, k, world.size());
+                nethub.send(node_id, send_qekmer);
             }
         } else {
             if (!done_reading) {
@@ -144,24 +131,8 @@ void build_map(FastQReader* r, HashMap<kmer_t, kmer_info_t>& kmer_map, mpi::comm
             if (node_done[i]) continue;
 
             int status;
-            while ((status = nethub.recv(i, recv_qkmer)) == 0) {
-                for_base_in_kmer_from(b, recv_qkmer->kmer, k, 1) {
-                    set_base(recv_kmer, b_i_, b);
-                } end_for;
-
-#if FILTER_ON
-                if (!kmer_filter.check(recv_kmer)) {
-                    kmer_filter.add(recv_kmer);
-                } else {
-#endif
-                    kmer_map.try_insert(recv_kmer);
-                    if (recv_qkmer->lqual > Q_MIN)
-                        kmer_map.map[recv_kmer].lquals[get_base(recv_qkmer->kmer, 0)]++;
-                    if (recv_qkmer->rqual > Q_MIN)
-                        kmer_map.map[recv_kmer].rquals[get_base(recv_qkmer->kmer, k+1)]++;
-#if FILTER_ON
-                }
-#endif
+            while ((status = nethub.recv(i, recv_qekmer)) == 0) {
+                kmer_store.insert(recv_qekmer);
             }
 
             if (status == 1)
@@ -171,50 +142,11 @@ void build_map(FastQReader* r, HashMap<kmer_t, kmer_info_t>& kmer_map, mpi::comm
         }
     }
 
-    free(send_qkmer);
-    free(recv_qkmer);
+    free(send_qekmer);
+    free(recv_qekmer);
 }
 
-/* Return a single byte which represents a bitmap for valid extensions. */
-/* TODO - Explain this function more... */
-uint8_t get_ext_map(kmer_info_t* kmer_info)
-{
-    uint8_t ext_map = 0;
-
-    for (uint8_t i = 0; i < BASE::NUM_BASES; i++) {
-        if (kmer_info->lquals[i] >= D_MIN)
-            ext_map |= 1 << (BASE::NUM_BASES + i);
-        if (kmer_info->rquals[i] >= D_MIN)
-            ext_map |= 1 << i;
-    }
-    return ext_map;
-}
-
-static inline bool check_hq_extensions(extensions_t extensions)
-{
-    /* This kind of assumes that extensions_t := uint8 */
-    return extensions.ext != 0;
-    /*
-    return extensions.lA || extensions.lC || extensions.lG || extensions.lT ||
-           extensions.rA || extensions.rC || extensions.rG || extensions.rT;
-    */
-}
-
-extensions_t qual_counts_2_extensions(kmer_info_t* qual_counts)
-{
-    extensions_t ext;
-    ext.ext = 0;
-    for (uint8_t i = 0; i < BASE::NUM_BASES; i++) {
-        if (qual_counts->lquals[i] >= D_MIN) {
-            ext.ext |= 1 << (4 + i);
-        }
-        if (qual_counts->rquals[i] >= D_MIN) {
-            ext.ext |= 1 << i;
-        }
-    }
-    return ext;
-}
-
+#if 0
 void gather_kmers(HashMap<kmer_t, extensions_t>& all_kmer_map,
         HashMap<kmer_t, kmer_info_t>& kmer_map, mpi::communicator& world)
 {
@@ -406,6 +338,7 @@ void build_contigs(vector<Contig*>& contigs, HashMap<kmer_t, kmer_info_t> kmer_m
         //    continue;
     }
 }
+#endif
 
 int main(int argc, char* argv[])
 {
@@ -421,20 +354,15 @@ int main(int argc, char* argv[])
 
     vector<string> prefix_boundaries;
 
-    HashMap<kmer_t, kmer_info_t> kmer_map(INITIAL_CAPACITY, 0,
-            (hash_map_hash_func_t) kmer_hash_K, (hash_map_eq_func_t) kmer_eq_K,
-            kmer_size(k));
-    build_map(reader, kmer_map, world);
+    KmerCountStore kmer_store(k);
+    build_store(reader, kmer_store, world);
+    kmer_store.trim();
 
     char outname[100];
     sprintf(outname, "%s.%d", argv[1], world.rank());
     FILE* outfile = fopen(outname, "w");
-    distrib_print_ufx(outfile, kmer_map);
+    kmer_store.print_ufx(outfile);
     fclose(outfile);
-    //HashMap<kmer_t, extensions_t> all_kmer_map(INITIAL_CAPACITY, 0,
-    //        (hash_map_hash_func_t) kmer_hash_K, (hash_map_eq_func_t) kmer_eq_K,
-    //        kmer_size(k));
-    //gather_kmers(all_kmer_map, kmer_map, world);
 
     //if (world.rank() == 0) {
     //    FILE* outfile = fopen(argv[1], "w");

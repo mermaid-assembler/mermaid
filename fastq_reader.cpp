@@ -85,7 +85,7 @@ bool FastQReader::next_file()
     return true;
 }
 
-bool FastQReader::read_next(qkmer_t* qkmer)
+bool FastQReader::read_next(qekmer_t* qekmer)
 {
     if (curr_path == paths.end()) {
         return false;
@@ -114,28 +114,26 @@ bool FastQReader::read_next(qkmer_t* qkmer)
     }
 
     // WARNING: This memset may be needed.
-    //memset(qkmer, 0, qkmer_size(k + 2));
+    //memset(qekmer, 0, qekmer_size(k));
     base b;
+    for_base_in_kmer_from(b, read, k, read_col) {
+        set_base(qekmer->kmer, b_i_, b);
+    } end_for;
+
     if (read_col == 0) {
-        for_base_in_kmer_from(b, read, k + 1, read_col) {
-            set_base(qkmer->kmer, 1 + b_i_, b);
-        } end_for;
-        set_base(qkmer->kmer, 0, BASE::N);
-        qkmer->lqual = 0;
-        qkmer->rqual = quals[read_col + k];
-    } else if (read_col <= read_len - (k + 1)) {
-        for_base_in_kmer_from(b, read, k + 2, read_col - 1) {
-            set_base(qkmer->kmer, b_i_, b);
-        } end_for;
-        qkmer->lqual = quals[read_col - 1];
-        qkmer->rqual = quals[read_col + k];
-    } else { /* read_col == read_len - k */
-        for_base_in_kmer_from(b, read, k + 1, read_col - 1) {
-            set_base(qkmer->kmer, b_i_, b);
-        } end_for;
-        set_base(qkmer->kmer, k + 1, BASE::N);
-        qkmer->lqual = quals[read_col - 1];
-        qkmer->rqual = 0;
+        qekmer->exts.left = BASE::N;
+        qekmer->lqual = 0;
+    } else {
+        qekmer->exts.left = get_base(read, read_col - 1);
+        qekmer->lqual = quals[read_col - 1];
+    }
+
+    if (read_col + k == read_len) {
+        qekmer->exts.right = BASE::N;
+        qekmer->rqual = 0;
+    } else {
+        qekmer->exts.right = get_base(read, read_col + k);
+        qekmer->rqual = quals[read_col + k];
     }
 
     read_col++;
