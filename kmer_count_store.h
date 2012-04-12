@@ -38,7 +38,11 @@ public:
 
     void print_ufx(FILE* outfile);
 
+    void build_contigs(std::vector<Contig*> contigs);
+
 protected:
+    void build_contig(int32_t contig_idx, Contig* contig, kmer_t beg_kmer, kmer_info_t& beg_kmer_info);
+
     k_t k;
     ScalableBloomFilter kmer_filter;
     HashMap<kmer_t, qual_counts_t>* counts_map;     /* Maps kmer to qual counts */

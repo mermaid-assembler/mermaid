@@ -14,8 +14,8 @@ using BASE::base2char;
 using BASE::inv_base;
 
 /* This must be a power of 2. */
-const int BITS_PER_BASE = 4;
-const int BASES_PER_BYTE = 8 / BITS_PER_BASE;
+const uint8_t BITS_PER_BASE = 4;
+const uint8_t BASES_PER_BYTE = 8 / BITS_PER_BASE;
 
 typedef uint8_t kmer_base_t;
 typedef uint8_t* kmer_t;

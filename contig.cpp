@@ -31,6 +31,7 @@ void Contig::append_kmer(kmer_t kmer, k_t len)
     for ( ; beg_idx > SUBCONTIG_LEN; beg_idx -= SUBCONTIG_LEN)
         sc_idx++;
 
+    /* FIXME - Get rid of these sanity checks for production code */
     if (len < SUBCONTIG_LEN - beg_idx) {
         if (!cmp_kmer(subcontigs[sc_idx], kmer, len - 1, beg_idx)) {
             char kmer_str[kmer_size(len)];

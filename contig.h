@@ -18,6 +18,8 @@ public:
 protected:
     std::vector<kmer_t> subcontigs;
     size_t len;
+
+public:
     int32_t next_contig_id;
 };
 
