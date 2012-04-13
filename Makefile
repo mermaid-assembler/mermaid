@@ -1,7 +1,7 @@
 PROG_NAME = mermaid
 
 CXX = mpic++
-CXXFLAGS = -c -g -Wall -fshort-enums
+CXXFLAGS = -c -g -Wall -O3 -fshort-enums
 LDFLAGS = 
 ifeq ($(shell uname), Darwin)
 LIBS = -lboost_mpi -lboost_serialization-mt -lboost_filesystem-mt -lboost_system-mt
