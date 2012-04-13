@@ -8,8 +8,7 @@
 
 #include "kmer.h"
 
-/* TODO - Vary this variable to make sure the subcontigs thing works */
-const size_t SUBCONTIG_LEN = 4000;         /* Length in bases */
+const size_t SUBCONTIG_LEN = 400;         /* Length in bases */
 
 class Contig {
 public:

@@ -162,7 +162,7 @@ void KmerCountStore::build_contig(Contig* contig, kmer_t beg_kmer, kmer_info_t& 
     if (!can_use_in_contig(beg_kmer_info))
         return;
 
-    kmer_a subcontig[SUBCONTIG_LEN];
+    kmer_a subcontig[kmer_size(SUBCONTIG_LEN)];
     kmer_a tmp_kmer[kmer_size(k)];
     size_t idx;
     base b;
@@ -206,7 +206,7 @@ void KmerCountStore::build_contig(Contig* contig, kmer_t beg_kmer, kmer_info_t& 
 
         if (idx == SUBCONTIG_LEN) {
             memcpy(subcontig, tmp_kmer, kmer_size(k));
-            idx = 0;
+            idx = k;
         }
     }
 }

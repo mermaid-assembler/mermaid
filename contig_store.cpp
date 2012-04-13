@@ -23,7 +23,7 @@ void ContigStore::print_contigs(FILE* outfile)
     for (vector<Contig*>::iterator it = contigs.begin();
             it != contigs.end();
             it++) {
-        fprintf(outfile, "id %d next_id %d\n", (*it)->get_id(), (*it)->get_next_id());
+        fprintf(outfile, "id %d next_id %d len %lu\n", (*it)->get_id(), (*it)->get_next_id(), (*it)->get_len());
         (*it)->fprintln(outfile);
     }
 }
