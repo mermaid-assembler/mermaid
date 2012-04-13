@@ -1,5 +1,5 @@
-#ifndef _DISTRIBUTED_KMER_STORE_H_
-#define _DISTRIBUTED_KMER_STORE_H_
+#ifndef _KMER_COUNT_STORE_H_
+#define _KMER_COUNT_STORE_H_
 
 #include <vector>
 
@@ -23,12 +23,12 @@ typedef struct {
     int32_t contig_idx;
 } kmer_info_t;
 
-class DistributedKmerStore {
+class KmerCountStore {
 public:
     typedef HashMap<kmer_t, qual_counts_t>::map_type_t counts_map_type_t;;
     typedef HashMap<kmer_t, kmer_info_t>::map_type_t contig_map_type_t;;
 
-    DistributedKmerStore(k_t k);
+    KmerCountStore(k_t k);
 
     /* Insert qekmer into the kmer hash map. */
     void insert(qekmer_t* qekmer);
@@ -50,4 +50,4 @@ protected:
                                                        go contigs */
 };
 
-#endif /* _DISTRIBUTED_KMER_STORE_H_ */
+#endif /* _KMER_COUNT_STORE_H_ */

@@ -10,7 +10,7 @@
 #include "fastq_reader.h"
 #include "nethub.h"
 #include "config.h"
-#include "distributed_kmer_store.h"
+#include "kmer_count_store.h"
 #include "contig.h"
 
 using namespace std;
@@ -96,7 +96,7 @@ FastQReader* get_reader(int argc, char* argv[], mpi::communicator& world, k_t k)
     return reader;
 }
 
-void build_store(FastQReader* r, DistributedKmerStore& kmer_store, mpi::communicator& world)
+void build_store(FastQReader* r, KmerCountStore& kmer_store, mpi::communicator& world)
 {
     NetHub nethub(world, qekmer_size(k));
 
@@ -352,18 +352,18 @@ int main(int argc, char* argv[])
 
     FastQReader* reader = get_reader(argc - 2, &argv[2], world, k);
 
-    DistributedKmerStore kmer_store(k);
+    KmerCountStore kmer_store(k);
     build_store(reader, kmer_store, world);
     kmer_store.trim();
 
-    //vector<Contig*> contigs;
-    //kmer_store.build_contigs(contigs);
+    vector<Contig*> contigs;
+    kmer_store.build_contigs(contigs);
 
-    char outname[100];
-    sprintf(outname, "%s.%d", argv[1], world.rank());
-    FILE* outfile = fopen(outname, "w");
-    kmer_store.print_ufx(outfile);
-    fclose(outfile);
+    //char outname[100];
+    //sprintf(outname, "%s.%d", argv[1], world.rank());
+    //FILE* outfile = fopen(outname, "w");
+    //kmer_store.print_ufx(outfile);
+    //fclose(outfile);
 
     //if (world.rank() == 0) {
     //    FILE* outfile = fopen(argv[1], "w");
