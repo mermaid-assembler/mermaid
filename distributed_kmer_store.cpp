@@ -170,7 +170,7 @@ void DistributedKmerStore::build_contig(int32_t contig_idx, Contig* contig, kmer
     for_base_in_kmer(b, beg_kmer, k) {
         set_base(subcontig, 1 + b_i_, b);
     } end_for;
-    contig->append_kmer(beg_kmer, k + 1);
+    contig->append_kmer(subcontig, k + 1);
     beg_kmer_info.contig_idx = contig_idx;
     idx = k + 1;
 
