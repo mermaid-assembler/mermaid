@@ -356,8 +356,8 @@ int main(int argc, char* argv[])
     build_store(reader, kmer_store, world);
     kmer_store.trim();
 
-    vector<Contig*> contigs;
-    kmer_store.build_contigs(contigs);
+    ContigStore contig_store;
+    kmer_store.build_contigs(contig_store);
 
     //char outname[100];
     //sprintf(outname, "%s.%d", argv[1], world.rank());

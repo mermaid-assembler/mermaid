@@ -7,6 +7,7 @@
 #include "hash_map.h"
 #include "scalable_bloom_filter.h"
 #include "contig.h"
+#include "contig_store.h"
 
 typedef struct {
     count_t lquals[BASE::NUM_BASES];
@@ -20,7 +21,7 @@ typedef struct {
 
 typedef struct {
     ext_map_t ext_map;
-    int32_t contig_idx;
+    int32_t contig_id;
 } kmer_info_t;
 
 class KmerCountStore {
@@ -38,10 +39,10 @@ public:
 
     void print_ufx(FILE* outfile);
 
-    void build_contigs(std::vector<Contig*> contigs);
+    void build_contigs(ContigStore& contig_store);
 
 protected:
-    void build_contig(int32_t contig_idx, Contig* contig, kmer_t beg_kmer, kmer_info_t& beg_kmer_info);
+    void build_contig(Contig* contig, kmer_t beg_kmer, kmer_info_t& beg_kmer_info);
 
     k_t k;
     ScalableBloomFilter kmer_filter;

@@ -7,8 +7,8 @@
 
 using namespace std;
 
-Contig::Contig()
-    : subcontigs(), len(0), next_contig_id(-1)
+Contig::Contig(int32_t id)
+    : subcontigs(), len(0), id(id), next_id(-1)
 {
     subcontigs.push_back((kmer_t) malloc(kmer_size(SUBCONTIG_LEN)));
 }

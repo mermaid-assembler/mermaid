@@ -2,6 +2,7 @@
 #include "kmer.h"
 #include "kmer_count_store.h"
 #include "utils.h"
+#include "contig_store.h"
 
 #define FILTER_ON 0
 
@@ -66,7 +67,7 @@ void KmerCountStore::trim()
         ext_map_t ext_map = get_ext_map(qual_counts);
         if (ext_map.left || ext_map.right) {
             contig_map->map[kmer].ext_map = ext_map;
-            contig_map->map[kmer].contig_idx = -1;
+            contig_map->map[kmer].contig_id = -1;
         } else {
             free(kmer);
         }
@@ -156,7 +157,7 @@ static base ext_map_side2base(uint8_t side)
     panic("Given ext_map side didn't have any bits set in %s\n", __func__);
 }
 
-void KmerCountStore::build_contig(int32_t contig_idx, Contig* contig, kmer_t beg_kmer, kmer_info_t& beg_kmer_info)
+void KmerCountStore::build_contig(Contig* contig, kmer_t beg_kmer, kmer_info_t& beg_kmer_info)
 {
     if (!can_use_in_contig(beg_kmer_info))
         return;
@@ -171,7 +172,7 @@ void KmerCountStore::build_contig(int32_t contig_idx, Contig* contig, kmer_t beg
         set_base(subcontig, 1 + b_i_, b);
     } end_for;
     contig->append_kmer(subcontig, k + 1);
-    beg_kmer_info.contig_idx = contig_idx;
+    beg_kmer_info.contig_id = contig->get_id();
     idx = k + 1;
 
     kmer_info_t& kmer_info = beg_kmer_info;
@@ -196,11 +197,11 @@ void KmerCountStore::build_contig(int32_t contig_idx, Contig* contig, kmer_t beg
                 get_base(subcontig, idx - (k + 1)))
             return;
 
-        if (kmer_info.contig_idx >= 0) {
-            contig->next_contig_id = kmer_info.contig_idx;
+        if (kmer_info.contig_id >= 0) {
+            contig->set_next_id(kmer_info.contig_id);
             return;
         } else {
-            kmer_info.contig_idx = contig_idx;
+            kmer_info.contig_id = contig->get_id();
         }
 
         if (idx == SUBCONTIG_LEN) {
@@ -210,11 +211,8 @@ void KmerCountStore::build_contig(int32_t contig_idx, Contig* contig, kmer_t beg
     }
 }
 
-void KmerCountStore::build_contigs(std::vector<Contig*> contigs)
+void KmerCountStore::build_contigs(ContigStore& contig_store)
 {
-    contigs.push_back(new Contig());
-    size_t contig_idx = 0;
-
     for (contig_map_type_t::iterator it = contig_map->map.begin();
             it != contig_map->map.end();
             it++) {
@@ -224,10 +222,10 @@ void KmerCountStore::build_contigs(std::vector<Contig*> contigs)
 
         if (!can_use_in_contig(kmer_info))
             continue;
-        if (kmer_info.contig_idx >= 0)
+        if (kmer_info.contig_id >= 0)
             continue;
 
-        build_contig(contig_idx, contigs[contig_idx], kmer, kmer_info);
+        build_contig(contig_store.get_new_contig(), kmer, kmer_info);
     }
 }
 
