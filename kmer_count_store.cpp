@@ -225,7 +225,8 @@ void KmerCountStore::build_contigs(ContigStore& contig_store)
         if (kmer_info.contig_id >= 0)
             continue;
 
-        build_contig(contig_store.get_new_contig(), kmer, kmer_info);
+        Contig* contig = contig_store.get_new_contig();
+        build_contig(contig, kmer, kmer_info);
     }
 }
 

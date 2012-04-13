@@ -359,11 +359,12 @@ int main(int argc, char* argv[])
     ContigStore contig_store;
     kmer_store.build_contigs(contig_store);
 
-    //char outname[100];
-    //sprintf(outname, "%s.%d", argv[1], world.rank());
-    //FILE* outfile = fopen(outname, "w");
+    char outname[100];
+    sprintf(outname, "%s.%d", argv[1], world.rank());
+    FILE* outfile = fopen(outname, "w");
     //kmer_store.print_ufx(outfile);
-    //fclose(outfile);
+    contig_store.print_contigs(outfile);
+    fclose(outfile);
 
     //if (world.rank() == 0) {
     //    FILE* outfile = fopen(argv[1], "w");

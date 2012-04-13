@@ -1,6 +1,7 @@
 #ifndef _CONTIG_STORE_H_
 #define _CONTIG_STORE_H_
 
+#include <cstdio>
 #include <vector>
 
 #include "contig.h"
@@ -10,6 +11,8 @@ public:
     ContigStore();
 
     Contig* get_new_contig();
+
+    void print_contigs(FILE* outfile);
 
 protected:
     std::vector<Contig*> contigs;
