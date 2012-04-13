@@ -172,7 +172,7 @@ void KmerCountStore::build_contig(Contig* contig, kmer_t beg_kmer, kmer_info_t& 
         set_base(subcontig, 1 + b_i_, b);
     } end_for;
     contig->append_kmer(subcontig, k + 1);
-    beg_kmer_info.contig_id = contig->get_id();
+    beg_kmer_info.contig_id = contig->id;
     idx = k + 1;
 
     kmer_info_t& kmer_info = beg_kmer_info;
@@ -198,10 +198,10 @@ void KmerCountStore::build_contig(Contig* contig, kmer_t beg_kmer, kmer_info_t& 
             return;
 
         if (kmer_info.contig_id >= 0) {
-            contig->set_next_id(kmer_info.contig_id);
+            contig->next_id = kmer_info.contig_id;
             return;
         } else {
-            kmer_info.contig_id = contig->get_id();
+            kmer_info.contig_id = contig->id;
         }
 
         if (idx == SUBCONTIG_LEN) {
