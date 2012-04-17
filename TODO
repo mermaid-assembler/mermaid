@@ -2,3 +2,5 @@
 * Make it so that not all the files have to be present for each node
 * Delete kmers from hash table as we gather
 * lookinto mmap for performance reasons
+* may want to add preproccessing step that uses 'split' to split files into
+  small files that fit in memory using mmap
