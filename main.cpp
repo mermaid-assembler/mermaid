@@ -340,6 +340,24 @@ void build_contigs(vector<Contig*>& contigs, HashMap<kmer_t, kmer_info_t> kmer_m
 }
 #endif
 
+void print_ufxs(char* outprefix, KmerCountStore& kmer_store, int rank)
+{
+    stringstream ss;
+    ss << outprefix << ".ufx." << rank;
+    FILE* outfile = fopen(ss.str().c_str(), "w");
+    kmer_store.print_ufxs(outfile);
+    fclose(outfile);
+}
+
+void print_contigs(char* outprefix, ContigStore& contig_store, int rank)
+{
+    stringstream ss;
+    ss << outprefix << ".contig." << rank;
+    FILE* outfile = fopen(ss.str().c_str(), "w");
+    contig_store.print_contigs(outfile);
+    fclose(outfile);
+}
+
 int main(int argc, char* argv[])
 {
     mpi::environment env(argc, argv);
@@ -359,12 +377,8 @@ int main(int argc, char* argv[])
     ContigStore contig_store;
     kmer_store.build_contigs(contig_store);
 
-    char outname[100];
-    sprintf(outname, "%s.%d", argv[1], world.rank());
-    FILE* outfile = fopen(outname, "w");
-    //kmer_store.print_ufx(outfile);
-    contig_store.print_contigs(outfile);
-    fclose(outfile);
+    print_ufxs(argv[1], kmer_store, world.rank());
+    print_contigs(argv[1], contig_store, world.rank());
 
     //if (world.rank() == 0) {
     //    FILE* outfile = fopen(argv[1], "w");

@@ -37,7 +37,7 @@ public:
     /* Trim kmers which don't appear at least D_MIN times. */
     void trim();
 
-    void print_ufx(FILE* outfile);
+    void print_ufxs(FILE* outfile);
 
     void build_contigs(ContigStore& contig_store);
 

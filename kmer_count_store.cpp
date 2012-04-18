@@ -78,7 +78,7 @@ void KmerCountStore::trim()
     counts_map = NULL;
 }
 
-void KmerCountStore::print_ufx(FILE* outfile)
+void KmerCountStore::print_ufxs(FILE* outfile)
 {
     if (contig_map == NULL) {
         panic("You have not called trim on the kmer count store\n");
