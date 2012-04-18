@@ -13,13 +13,11 @@ KmerCountStore::KmerCountStore(k_t k)
     : k(k),
     kmer_filter(INITIAL_CAPACITY, 0.001, 0,
             (bloom_filter_hash_func_t) kmer_hash_K),
-    counts_map(NULL), contig_map(NULL), scratch_kmer(), scratch_revcmp()
+    counts_map(NULL), contig_map(NULL)
 {
     counts_map = new HashMap<kmer_t, qual_counts_t>(INITIAL_CAPACITY, 0,
             (hash_map_hash_func_t) kmer_hash_K,
             (hash_map_eq_func_t) kmer_eq_K, kmer_size(k));
-    scratch_kmer = (kmer_t) malloc(kmer_size(k));
-    scratch_revcmp = (kmer_t) malloc(kmer_size(k));
 }
 
 void KmerCountStore::insert(qekmer_t* qekmer)
@@ -159,18 +157,19 @@ static base ext_map_side2base(uint8_t side)
     panic("Given ext_map side didn't have any bits set in %s\n", __func__);
 }
 
-KmerCountStore::contig_map_type_t::iterator KmerCountStore::get_next_kmer(bool& revcmp_found)
+KmerCountStore::contig_map_type_t::iterator KmerCountStore::get_next_kmer(kmer_t kmer, bool& revcmp_found)
 {
     contig_map_type_t::iterator it;
+    kmer_a revcmp[kmer_size(k)];
 
-    it = contig_map->map.find(scratch_kmer);
+    it = contig_map->map.find(kmer);
     if (it != contig_map->map.end()) {
         revcmp_found = false;
         return it;
     }
 
-    revcmp_kmer(scratch_revcmp, scratch_kmer, k);
-    it = contig_map->map.find(scratch_revcmp);
+    revcmp_kmer(revcmp, kmer, k);
+    it = contig_map->map.find(revcmp);
     if (it != contig_map->map.end()) {
         revcmp_found = true;
         return it;
@@ -185,7 +184,7 @@ void KmerCountStore::build_contig(Contig* contig, kmer_t beg_kmer, kmer_info_t& 
         return;
 
     kmer_a subcontig[kmer_size(SUBCONTIG_LEN)];
-    kmer_t cur_kmer;
+    kmer_a cur_kmer[kmer_size(k)];
     exts_t exts;
     size_t idx;
     base b;
@@ -195,20 +194,20 @@ void KmerCountStore::build_contig(Contig* contig, kmer_t beg_kmer, kmer_info_t& 
     exts.left = contig->exts.left;
     for_base_in_kmer(b, beg_kmer, k) {
         set_base(subcontig, b_i_, b);
-        set_base(scratch_kmer, b_i_, b);
     } end_for;
-    contig->append_kmer(subcontig, k + 1);
+    contig->append_kmer(subcontig, k);
     beg_kmer_info.contig_id = contig->id;
     idx = k;
     exts.right = ext_map_side2base(beg_kmer_info.ext_map.right);
 
     while (1) {
-        set_base(subcontig, idx++, exts.right);
+        set_base(subcontig, idx, exts.right);
+        idx++;
         for_base_in_kmer_from(b, subcontig, k, idx - k) {
-            set_base(scratch_kmer, b_i_, b);
+            set_base(cur_kmer, b_i_, b);
         } end_for;
 
-        contig_map_type_t::iterator it = get_next_kmer(revcmp_found);
+        contig_map_type_t::iterator it = get_next_kmer(cur_kmer, revcmp_found);
         if (it == contig_map->map.end())
             break;
            
@@ -226,11 +225,9 @@ void KmerCountStore::build_contig(Contig* contig, kmer_t beg_kmer, kmer_info_t& 
         if (!revcmp_found) {
             exts.left = ext_map_side2base(cur_kmer_info.ext_map.left);
             exts.right = ext_map_side2base(cur_kmer_info.ext_map.right);
-            cur_kmer = scratch_kmer;
         } else {
-            exts.left = ext_map_side2base(cur_kmer_info.ext_map.left);
-            exts.right = ext_map_side2base(cur_kmer_info.ext_map.right);
-            cur_kmer = scratch_revcmp;
+            exts.left = inv_base(ext_map_side2base(cur_kmer_info.ext_map.right));
+            exts.right = inv_base(ext_map_side2base(cur_kmer_info.ext_map.left));
         }
         
         if (get_base(subcontig, idx - k - 1) != exts.left)

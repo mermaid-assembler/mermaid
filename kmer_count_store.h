@@ -49,16 +49,13 @@ protected:
      * reverse complement was found. kmer_info holds the information from the
      * next kmer. If the next kmer could not be found, revcmp_found and
      * kmer_info should not be disturbed. */
-    contig_map_type_t::iterator get_next_kmer(bool& revcmp_found);
+    contig_map_type_t::iterator get_next_kmer(kmer_t kmer, bool& revcmp_found);
 
     k_t k;
     ScalableBloomFilter kmer_filter;
     HashMap<kmer_t, qual_counts_t>* counts_map;     /* Maps kmer to qual counts */
     HashMap<kmer_t, kmer_info_t>* contig_map;       /* Trimmed map that points
                                                        go contigs */
-
-    kmer_t scratch_kmer;        /* Scratch buffer to store tmp kmers. */
-    kmer_t scratch_revcmp;      /* Scratch buffer to store tmp revcmps. */
 };
 
 #endif /* _KMER_COUNT_STORE_H_ */
