@@ -13,11 +13,13 @@ KmerCountStore::KmerCountStore(k_t k)
     : k(k),
     kmer_filter(INITIAL_CAPACITY, 0.001, 0,
             (bloom_filter_hash_func_t) kmer_hash_K),
-    counts_map(NULL), contig_map(NULL)
+    counts_map(NULL), contig_map(NULL), scratch_kmer(), scratch_revcmp()
 {
     counts_map = new HashMap<kmer_t, qual_counts_t>(INITIAL_CAPACITY, 0,
             (hash_map_hash_func_t) kmer_hash_K,
             (hash_map_eq_func_t) kmer_eq_K, kmer_size(k));
+    scratch_kmer = (kmer_t) malloc(kmer_size(k));
+    scratch_revcmp = (kmer_t) malloc(kmer_size(k));
 }
 
 void KmerCountStore::insert(qekmer_t* qekmer)
@@ -157,58 +159,130 @@ static base ext_map_side2base(uint8_t side)
     panic("Given ext_map side didn't have any bits set in %s\n", __func__);
 }
 
+KmerCountStore::contig_map_type_t::iterator KmerCountStore::get_next_kmer(bool& revcmp_found)
+{
+    contig_map_type_t::iterator it;
+
+    it = contig_map->map.find(scratch_kmer);
+    if (it != contig_map->map.end()) {
+        revcmp_found = false;
+        return it;
+    }
+
+    revcmp_kmer(scratch_revcmp, scratch_kmer, k);
+    it = contig_map->map.find(scratch_revcmp);
+    if (it != contig_map->map.end()) {
+        revcmp_found = true;
+        return it;
+    }
+
+    return it;
+}
+
 void KmerCountStore::build_contig(Contig* contig, kmer_t beg_kmer, kmer_info_t& beg_kmer_info)
 {
     if (!can_use_in_contig(beg_kmer_info))
         return;
 
     kmer_a subcontig[kmer_size(SUBCONTIG_LEN)];
-    kmer_a tmp_kmer[kmer_size(k)];
+    kmer_t cur_kmer;
+    exts_t exts;
     size_t idx;
     base b;
+    bool revcmp_found;
 
-    set_base(subcontig, 0, (base) ext_map_side2base(beg_kmer_info.ext_map.left));
+    contig->exts.left = ext_map_side2base(beg_kmer_info.ext_map.left);
+    exts.left = contig->exts.left;
     for_base_in_kmer(b, beg_kmer, k) {
-        set_base(subcontig, 1 + b_i_, b);
+        set_base(subcontig, b_i_, b);
+        set_base(scratch_kmer, b_i_, b);
     } end_for;
     contig->append_kmer(subcontig, k + 1);
     beg_kmer_info.contig_id = contig->id;
-    idx = k + 1;
+    idx = k;
+    exts.right = ext_map_side2base(beg_kmer_info.ext_map.right);
 
-    kmer_info_t& kmer_info = beg_kmer_info;
     while (1) {
-        set_base(subcontig, idx, ext_map_side2base(kmer_info.ext_map.right));
-        idx++;
+        set_base(subcontig, idx++, exts.right);
         for_base_in_kmer_from(b, subcontig, k, idx - k) {
-            set_base(tmp_kmer, b_i_, b);
+            set_base(scratch_kmer, b_i_, b);
         } end_for;
-        contig->append_kmer(tmp_kmer, k);
 
-        contig_map_type_t::iterator it = contig_map->map.find(tmp_kmer);
+        contig_map_type_t::iterator it = get_next_kmer(revcmp_found);
         if (it == contig_map->map.end())
-            return;
+            break;
+           
+        kmer_info_t& cur_kmer_info = it->second;
+        if (!can_use_in_contig(cur_kmer_info))
+            break;
 
-        kmer_info = it->second;
-
-        if (!can_use_in_contig(kmer_info))
-            return;
-        /* If not reflexive */
-        if (ext_map_side2base(kmer_info.ext_map.left) !=
-                get_base(subcontig, idx - (k + 1)))
-            return;
-
-        if (kmer_info.contig_id >= 0) {
-            contig->next_id = kmer_info.contig_id;
-            return;
+        if (cur_kmer_info.contig_id >= 0) {
+            contig->next_id = cur_kmer_info.contig_id;
+            break;
         } else {
-            kmer_info.contig_id = contig->id;
+            cur_kmer_info.contig_id = contig->id;
         }
 
+        if (!revcmp_found) {
+            exts.left = ext_map_side2base(cur_kmer_info.ext_map.left);
+            exts.right = ext_map_side2base(cur_kmer_info.ext_map.right);
+            cur_kmer = scratch_kmer;
+        } else {
+            exts.left = ext_map_side2base(cur_kmer_info.ext_map.left);
+            exts.right = ext_map_side2base(cur_kmer_info.ext_map.right);
+            cur_kmer = scratch_revcmp;
+        }
+        
+        if (get_base(subcontig, idx - k - 1) != exts.left)
+            break;
+
+        contig->append_kmer(cur_kmer, k);
+
         if (idx == SUBCONTIG_LEN) {
-            memcpy(subcontig, tmp_kmer, kmer_size(k));
+            memcpy(subcontig, cur_kmer, kmer_size(k));
             idx = k;
         }
     }
+    contig->exts.right = exts.right;
+    //while (1) {
+    //    if (get_next_kmer(revcmp_found, cur_kmer_info))
+    //    contig_map_type_t::iterator it = contig_map->map.find(cur_kmer);
+    //    if (it == contig_map->map.end()) {
+    //        revcmp_kmer(revcmp, cur_kmer, k);
+    //        it = contig_map->map.find(revcmp);
+    //        if (it == contig_map->map.end())
+    //            break;
+
+
+    //    set_base(subcontig, idx, ext_map_side2base(kmer_info.ext_map.right));
+    //    idx++;
+    //    for_base_in_kmer_from(b, subcontig, k, idx - k) {
+    //        set_base(tmp_kmer, b_i_, b);
+    //    } end_for;
+    //    contig->append_kmer(tmp_kmer, k);
+
+
+    //    kmer_info = it->second;
+
+    //    if (!can_use_in_contig(kmer_info))
+    //        return;
+    //    /* If not reflexive */
+    //    if (ext_map_side2base(kmer_info.ext_map.left) !=
+    //            get_base(subcontig, idx - (k + 1)))
+    //        return;
+
+    //    if (kmer_info.contig_id >= 0) {
+    //        contig->next_id = kmer_info.contig_id;
+    //        return;
+    //    } else {
+    //        kmer_info.contig_id = contig->id;
+    //    }
+
+    //    if (idx == SUBCONTIG_LEN) {
+    //        memcpy(subcontig, tmp_kmer, kmer_size(k));
+    //        idx = k;
+    //    }
+    //}
 }
 
 void KmerCountStore::build_contigs(ContigStore& contig_store)

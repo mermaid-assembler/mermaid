@@ -26,12 +26,14 @@ typedef uint8_t qual_t;
 typedef uint32_t count_t;
 
 typedef struct {
+    uint8_t left : 4;
+    uint8_t right : 4;
+} exts_t;
+
+typedef struct {
     qual_t lqual;
     qual_t rqual;
-    struct {
-        uint8_t left : 4;
-        uint8_t right : 4;
-    } exts;
+    exts_t exts;
     kmer_a kmer[0];
 } __attribute__((packed)) qekmer_t;
 

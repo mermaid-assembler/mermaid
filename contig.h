@@ -23,10 +23,7 @@ protected:
     std::vector<kmer_t> subcontigs;
 
 public:
-    struct {
-        uint8_t left : 4;
-        uint8_t right : 4;
-    } exts;
+    exts_t exts;
     size_t len;
     int32_t id;
     int32_t next_id;
