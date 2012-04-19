@@ -215,13 +215,10 @@ void KmerCountStore::build_contig(Contig* contig, kmer_t beg_kmer, kmer_info_t& 
         if (!can_use_in_contig(cur_kmer_info))
             break;
 
-        if (!revcmp_found) {
+        if (!revcmp_found)
             exts.left = ext_map_side2base(cur_kmer_info.ext_map.left);
-            exts.right = ext_map_side2base(cur_kmer_info.ext_map.right);
-        } else {
+        else
             exts.left = inv_base(ext_map_side2base(cur_kmer_info.ext_map.right));
-            exts.right = inv_base(ext_map_side2base(cur_kmer_info.ext_map.left));
-        }
         
         if (get_base(subcontig, idx - k - 1) != exts.left)
             break;
@@ -232,6 +229,11 @@ void KmerCountStore::build_contig(Contig* contig, kmer_t beg_kmer, kmer_info_t& 
         } else {
             cur_kmer_info.contig_id = contig->id;
         }
+
+        if (!revcmp_found)
+            exts.right = ext_map_side2base(cur_kmer_info.ext_map.right);
+        else
+            exts.right = inv_base(ext_map_side2base(cur_kmer_info.ext_map.left));
 
         contig->append_base(get_base(cur_kmer, k - 1));
 

@@ -110,8 +110,6 @@ bool Contig::join_contig(Contig* next_contig)
 {
     size_t subidx = len / SUBCONTIG_LEN;
     size_t sublen = len % SUBCONTIG_LEN;
-    if (sublen == 0)
-        subcontigs.push_back((kmer_t) malloc(kmer_size(SUBCONTIG_LEN)));
 
     ssize_t left_ext_len = sublen - k;
     ssize_t left_ext_idx = left_ext_len < 0 ? subidx - 1 : subidx;
