@@ -15,8 +15,8 @@ typedef struct {
 } qual_counts_t;
 
 typedef struct {
-    uint8_t left : 4;
-    uint8_t right : 4;
+    uint8_t left : BITS_PER_BASE;
+    uint8_t right : BITS_PER_BASE;
 } ext_map_t;
 
 typedef struct {
