@@ -19,16 +19,13 @@ public:
     void append_base(base b);
     void append_first_kmer(kmer_t kmer);
     /* Appends a contig to this contig. Returns true if the join succeeded;
-     * false otherwise. This function may fail if the extensions don't match up.
-     * len here is the lenght of the kmer (length overlap - 1)
+     * false otherwise. The join may fail if next_contig's left extension
+     * doesn't match up.
      */
-    //bool join_contig(Contig* next_contig, k_t len);
+    bool join_contig(Contig* next_contig);
 
     void fprint(FILE* outfile);
     void fprintln(FILE* outfile);
-
-protected:
-    uint32_t get_next_free_subcontig_idx(void);
 
 public:
     exts_t exts;

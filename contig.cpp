@@ -19,9 +19,11 @@ Contig::Contig()
 
 void Contig::append_base(base b)
 {
-    uint32_t subcontig_idx = get_next_free_subcontig_idx();
-    size_t sublen = len - subcontig_idx * SUBCONTIG_LEN;
-    set_base(subcontigs[subcontig_idx], sublen, b);
+    size_t subidx = len / SUBCONTIG_LEN;
+    size_t sublen = len % SUBCONTIG_LEN;
+    if (sublen == 0)
+        subcontigs.push_back((kmer_t) malloc(kmer_size(SUBCONTIG_LEN)));
+    set_base(subcontigs[subidx], sublen, b);
     len++;
 }
 
@@ -96,24 +98,46 @@ void Contig::append_kmer(kmer_t kmer)
 }
 #endif
 
-//bool Contig::join_contig(Contig* next_contig, k_t k)
-//{
-//    size_t beg_idx = (K - 1) > k ? 0 : k - (K - 1);
-//
-//    uint32_t sc_idx = 0;        /* subcontig index */
-//    for ( ; beg_idx > SUBCONTIG_LEN; beg_idx -= SUBCONTIG_LEN)
-//        sc_idx++;
-//
-//    /* FIXME - Get rid of these sanity checks for production code */
-//    if (k <= SUBCONTIG_LEN - beg_idx) {
-//        if (cmp_kmer(subcontigs[sc_idx], next_contig->subcontigs[0], K - 1, beg_idx)) {
-//            panic("contig did not match when being joined\n");
-//        }
-//    } else {
-//        size_t sublen = SUBCONTIG_LEN - beg_idx;
-//        size_t leftover = K - sublen;
-//
-//}
+bool Contig::join_contig(Contig* next_contig)
+{
+    size_t subidx = len / SUBCONTIG_LEN;
+    size_t sublen = len % SUBCONTIG_LEN;
+    if (sublen == 0)
+        subcontigs.push_back((kmer_t) malloc(kmer_size(SUBCONTIG_LEN)));
+
+    ssize_t left_ext_len = sublen - k;
+    ssize_t left_ext_idx = left_ext_len < 0 ? subidx - 1 : subidx;
+    if (left_ext_len < 0) left_ext_len += SUBCONTIG_LEN;
+    if (get_base(subcontigs[left_ext_idx], left_ext_len) !=
+            (base) next_contig->exts.left)
+        return false;
+
+    size_t next_idx = k - 1;
+    size_t next_sublen = next_idx;
+    size_t next_subidx = 0;
+    while (next_idx < next_contig->len) {
+        if (sublen == 0)
+            subcontigs.push_back((kmer_t) malloc(kmer_size(SUBCONTIG_LEN)));
+
+        base b = get_base(next_contig->subcontigs[next_subidx], next_sublen);
+        set_base(subcontigs[subidx], sublen, b);
+
+        len++;
+        sublen++;
+        if (sublen == SUBCONTIG_LEN) {
+            subidx++;
+            sublen = 0;
+        }
+        next_idx++;
+        next_sublen++;
+        if (next_sublen == SUBCONTIG_LEN) {
+            next_subidx++;
+            next_sublen = 0;
+        }
+    }
+
+    return true;
+}
 
 void Contig::fprint(FILE* outfile)
 {
@@ -131,17 +155,4 @@ void Contig::fprintln(FILE* outfile)
 {
     fprint(outfile);
     fprintf(outfile, "\n");
-}
-
-uint32_t Contig::get_next_free_subcontig_idx(void)
-{
-    size_t sublen = len;
-    uint32_t subcontig_idx = 0;
-    for ( ; sublen >= SUBCONTIG_LEN; sublen -= SUBCONTIG_LEN)
-        subcontig_idx++;
-
-    if (sublen == 0)
-        subcontigs.push_back((kmer_t) malloc(kmer_size(SUBCONTIG_LEN)));
-
-    return subcontig_idx;
 }
