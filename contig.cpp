@@ -8,63 +8,112 @@
 
 using namespace std;
 
-Contig::Contig(int32_t id)
-    : subcontigs(), exts(), len(0), id(id), next_id(-1)
+int32_t Contig::id_generator = 0;
+k_t Contig::k = K;      /* TODO - Set this dynamically. */
+
+Contig::Contig()
+    : exts(), len(0), id(id_generator++), next_id(-1), subcontigs()
 {
     subcontigs.push_back((kmer_t) malloc(kmer_size(SUBCONTIG_LEN)));
 }
 
-void Contig::append_kmer(kmer_t kmer, k_t len)
+void Contig::append_base(base b)
+{
+    uint32_t subcontig_idx = get_next_free_subcontig_idx();
+    size_t sublen = len - subcontig_idx * SUBCONTIG_LEN;
+    set_base(subcontigs[subcontig_idx], sublen, b);
+    len++;
+}
+
+void Contig::append_first_kmer(kmer_t kmer)
 {
     base b;
+    for_base_in_kmer(b, kmer, k) {
+        set_base(subcontigs[0], b_i_, b);
+    } end_for;
+    len = k;
+}
 
-    if (this->len == 0) {
-        for_base_in_kmer(b, kmer, len) {
+#if 0
+void Contig::append_kmer(kmer_t kmer)
+{
+    uint32_t subcontig_idx = get_next_free_subcontig_idx();
+    size_t sublen = len - subcontig_idx * SUBCONTIG_LEN;
+    size_t still_left = k;
+
+    while (still_left > 0) {
+        size_t left_in_subcontig = SUBCONTIG_LEN - sublen;
+        size_t copy_len = min(still_left, left_in_subcontig);
+        for_base_in_kmer(b, kmer, k
+    base b;
+
+    if (len == 0) {
+        for_base_in_kmer(b, kmer, k) {
             set_base(subcontigs[0], b_i_, b);
         } end_for;
-        this->len = len;
+        len = k;
         return;
     }
 
-    size_t beg_idx = (len - 1) > this->len ? 0 : this->len - (len - 1);
+    size_t beg_idx = (k - 1) > len ? 0 : len - (k - 1);
 
     uint32_t sc_idx = 0;        /* subcontig index */
     for ( ; beg_idx > SUBCONTIG_LEN; beg_idx -= SUBCONTIG_LEN)
         sc_idx++;
 
     /* FIXME - Get rid of these sanity checks for production code */
-    if (len <= SUBCONTIG_LEN - beg_idx) {
-        if (cmp_kmer(subcontigs[sc_idx], kmer, len - 1, beg_idx)) {
-            char kmer_str[kmer_size(len)];
-            kmer2str(kmer_str, kmer, len);
+    if (k <= SUBCONTIG_LEN - beg_idx) {
+        if (cmp_kmer(subcontigs[sc_idx], kmer, k - 1, beg_idx)) {
+            char kmer_str[kmer_size(k)];
+            kmer2str(kmer_str, kmer, k);
             panic("kmer (%s) didn't match when being appended to contig\n", kmer_str);
         }
 
-        set_base(subcontigs[sc_idx], beg_idx + len - 1, get_base(kmer, len - 1));
+        set_base(subcontigs[sc_idx], beg_idx + k - 1, get_base(kmer, k - 1));
     } else {
         size_t sublen = SUBCONTIG_LEN - beg_idx;
-        size_t leftover = len - sublen;
+        size_t leftover = k - sublen;
 
         if (leftover == 1)
             subcontigs.push_back((kmer_t) malloc(kmer_size(SUBCONTIG_LEN)));
 
         if (cmp_kmer(subcontigs[sc_idx], kmer, sublen, beg_idx)) {
-            char kmer_str[kmer_size(len)];
-            kmer2str(kmer_str, kmer, len);
+            char kmer_str[kmer_size(k)];
+            kmer2str(kmer_str, kmer, k);
             panic("kmer (%s) didn't match when being appended to contig\n", kmer_str);
         }
 
         if (cmp_kmer(subcontigs[sc_idx+1], kmer, leftover - 1, 0, sublen)) {
-            char kmer_str[kmer_size(len)];
-            kmer2str(kmer_str, kmer, len);
+            char kmer_str[kmer_size(k)];
+            kmer2str(kmer_str, kmer, k);
             panic("kmer (%s) didn't match when being appended to contig\n", kmer_str);
         }
 
-        set_base(subcontigs[sc_idx+1], leftover - 1, get_base(kmer, len - 1));
+        set_base(subcontigs[sc_idx+1], leftover - 1, get_base(kmer, k - 1));
     }
 
-    this->len++;
+    len++;
 }
+#endif
+
+//bool Contig::join_contig(Contig* next_contig, k_t k)
+//{
+//    size_t beg_idx = (K - 1) > k ? 0 : k - (K - 1);
+//
+//    uint32_t sc_idx = 0;        /* subcontig index */
+//    for ( ; beg_idx > SUBCONTIG_LEN; beg_idx -= SUBCONTIG_LEN)
+//        sc_idx++;
+//
+//    /* FIXME - Get rid of these sanity checks for production code */
+//    if (k <= SUBCONTIG_LEN - beg_idx) {
+//        if (cmp_kmer(subcontigs[sc_idx], next_contig->subcontigs[0], K - 1, beg_idx)) {
+//            panic("contig did not match when being joined\n");
+//        }
+//    } else {
+//        size_t sublen = SUBCONTIG_LEN - beg_idx;
+//        size_t leftover = K - sublen;
+//
+//}
 
 void Contig::fprint(FILE* outfile)
 {
@@ -82,4 +131,17 @@ void Contig::fprintln(FILE* outfile)
 {
     fprint(outfile);
     fprintf(outfile, "\n");
+}
+
+uint32_t Contig::get_next_free_subcontig_idx(void)
+{
+    size_t sublen = len;
+    uint32_t subcontig_idx = 0;
+    for ( ; sublen >= SUBCONTIG_LEN; sublen -= SUBCONTIG_LEN)
+        subcontig_idx++;
+
+    if (sublen == 0)
+        subcontigs.push_back((kmer_t) malloc(kmer_size(SUBCONTIG_LEN)));
+
+    return subcontig_idx;
 }

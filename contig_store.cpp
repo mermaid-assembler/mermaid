@@ -7,13 +7,13 @@
 using namespace std;
 
 ContigStore::ContigStore()
-    : contigs(), next_id(0)
+    : contigs()
 {
 }
 
 Contig* ContigStore::get_new_contig()
 {
-    Contig* contig = new Contig(next_id++);
+    Contig* contig = new Contig();
     contigs.push_back(contig);
     return contig;
 }

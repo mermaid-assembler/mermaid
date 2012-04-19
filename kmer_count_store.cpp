@@ -195,7 +195,7 @@ void KmerCountStore::build_contig(Contig* contig, kmer_t beg_kmer, kmer_info_t& 
     for_base_in_kmer(b, beg_kmer, k) {
         set_base(subcontig, b_i_, b);
     } end_for;
-    contig->append_kmer(subcontig, k);
+    contig->append_first_kmer(subcontig);
     beg_kmer_info.contig_id = contig->id;
     idx = k;
     exts.right = ext_map_side2base(beg_kmer_info.ext_map.right);
@@ -215,13 +215,6 @@ void KmerCountStore::build_contig(Contig* contig, kmer_t beg_kmer, kmer_info_t& 
         if (!can_use_in_contig(cur_kmer_info))
             break;
 
-        if (cur_kmer_info.contig_id >= 0) {
-            contig->next_id = cur_kmer_info.contig_id;
-            break;
-        } else {
-            cur_kmer_info.contig_id = contig->id;
-        }
-
         if (!revcmp_found) {
             exts.left = ext_map_side2base(cur_kmer_info.ext_map.left);
             exts.right = ext_map_side2base(cur_kmer_info.ext_map.right);
@@ -233,7 +226,14 @@ void KmerCountStore::build_contig(Contig* contig, kmer_t beg_kmer, kmer_info_t& 
         if (get_base(subcontig, idx - k - 1) != exts.left)
             break;
 
-        contig->append_kmer(cur_kmer, k);
+        if (cur_kmer_info.contig_id >= 0) {
+            contig->next_id = cur_kmer_info.contig_id;
+            break;
+        } else {
+            cur_kmer_info.contig_id = contig->id;
+        }
+
+        contig->append_base(get_base(cur_kmer, k - 1));
 
         if (idx == SUBCONTIG_LEN) {
             memcpy(subcontig, cur_kmer, kmer_size(k));
