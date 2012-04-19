@@ -37,15 +37,6 @@ int get_kmer_bin(qekmer_t* qekmer, k_t k, int world_size)
  */
 bool check_qekmer_qual(qekmer_t* qekmer, k_t k)
 {
-    base b;
-    for_base_in_kmer(b, qekmer->kmer, k) {
-        if (b == BASE::N)
-            return false;
-    } end_for;
-
-    if (qekmer->exts.left == BASE::N && qekmer->exts.right == BASE::N)
-        return false;
-
     if (qekmer->lqual <= Q_MIN && qekmer->rqual <= Q_MIN)
         return false;
 
@@ -65,19 +56,6 @@ void canonize_qekmer(qekmer_t* qekmer, k_t k)
         qekmer->exts.left = inv_base((base) qekmer->exts.right);
         qekmer->rqual = tmp_qual;
         qekmer->exts.right = tmp_ext;
-    }
-}
-
-/* Replaces endings with N's to A's with 0 qual score. */
-void clean_qekmer(qekmer_t* qekmer, k_t k)
-{
-    if (qekmer->exts.left == BASE::N) {
-        qekmer->exts.left = BASE::A;
-        qekmer->lqual = 0;
-    }
-    if (qekmer->exts.right == BASE::N) {
-        qekmer->exts.right = BASE::A;
-        qekmer->rqual = 0;
     }
 }
 
@@ -114,7 +92,6 @@ void build_store(FastQReader* r, KmerCountStore& kmer_store, mpi::communicator& 
         if (r->read_next(send_qekmer)) {
             if (check_qekmer_qual(send_qekmer, k)) {
                 canonize_qekmer(send_qekmer, k);
-                clean_qekmer(send_qekmer, k);
                 int node_id = get_kmer_bin(send_qekmer, k, world.size());
                 nethub.send(node_id, send_qekmer);
             }

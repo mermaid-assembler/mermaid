@@ -26,8 +26,8 @@ typedef uint8_t qual_t;
 typedef uint32_t count_t;
 
 typedef struct {
-    uint8_t left : 4;
-    uint8_t right : 4;
+    uint8_t left : BITS_PER_BASE;
+    uint8_t right : BITS_PER_BASE;
 } exts_t;
 
 typedef struct {

@@ -134,7 +134,6 @@ bool FastQReader::read_next(qekmer_t* qekmer)
         }
 
         if (read_col == 0) {
-            qekmer->exts.left = BASE::N;
             qekmer->lqual = 0;
         } else {
             qekmer->exts.left = char2base(read[read_col - 1]);
@@ -142,7 +141,6 @@ bool FastQReader::read_next(qekmer_t* qekmer)
         }
 
         if (read_col + k == read_len) {
-            qekmer->exts.right = BASE::N;
             qekmer->rqual = 0;
         } else {
             qekmer->exts.right = char2base(read[read_col + k]);

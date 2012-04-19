@@ -6,7 +6,8 @@
 #include "exceptions.h"
 
 namespace BASE {
-    enum base { A = 0, C, G, T, N };
+    //enum base { A = 0, C, G, T, N };
+    enum base { A = 0, C, G, T };
     const uint8_t NUM_BASES = 4;
 
     base char2base(char c);
