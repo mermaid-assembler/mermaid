@@ -11,11 +11,9 @@ ContigStore::ContigStore()
 {
 }
 
-Contig* ContigStore::get_new_contig()
+void ContigStore::add_contig(Contig* contig)
 {
-    Contig* contig = new Contig();
     contigs.push_back(contig);
-    return contig;
 }
 
 void ContigStore::print_contigs(FILE* outfile)

@@ -10,12 +10,11 @@ class ContigStore {
 public:
     ContigStore();
 
-    Contig* get_new_contig();
+    void add_contig(Contig* contig);
 
     void print_contigs(FILE* outfile);
 
 protected:
     std::vector<Contig*> contigs;
-    int32_t next_id;
 };
 #endif /* _CONTIG_STORE_H_ */

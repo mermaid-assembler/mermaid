@@ -17,6 +17,14 @@ Contig::Contig()
     subcontigs.push_back((kmer_t) malloc(kmer_size(SUBCONTIG_LEN)));
 }
 
+Contig::~Contig()
+{
+    while (!subcontigs.empty()) {
+        delete subcontigs.back();
+        subcontigs.pop_back();
+    }
+}
+
 void Contig::append_base(base b)
 {
     size_t subidx = len / SUBCONTIG_LEN;

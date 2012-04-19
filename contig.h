@@ -15,6 +15,7 @@ public:
     static void set_k(k_t k) { Contig::k = k; }
 
     Contig();
+    ~Contig();
 
     void append_base(base b);
     void append_first_kmer(kmer_t kmer);
