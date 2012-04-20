@@ -10,7 +10,7 @@ class ContigStore {
 public:
     ContigStore();
 
-    void add_contig(Contig* contig);
+    void add_contig(Contig* contig, int32_t next_id);
 
     void print_contigs(FILE* outfile);
 

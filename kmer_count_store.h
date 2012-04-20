@@ -24,6 +24,11 @@ typedef struct {
     int32_t contig_id;
 } kmer_info_t;
 
+typedef struct {
+    int32_t next_id;
+    bool next_revcmp;
+} next_contig_info_t;
+
 class KmerCountStore {
 public:
     typedef HashMap<kmer_t, qual_counts_t>::map_type_t counts_map_type_t;
@@ -42,7 +47,8 @@ public:
     void build_contigs(ContigStore& contig_store);
 
 protected:
-    void build_contig(Contig* contig, kmer_t beg_kmer, kmer_info_t& beg_kmer_info);
+    /* Returns id of the next contig. */
+    int32_t build_contig(Contig* contig, kmer_t beg_kmer, kmer_info_t& beg_kmer_info);
     /* Takes the kmer from scratch_kmer and looks for the next kmer in
      * contig_map. If found, returns true; otherwise false is returned.
      * revcmp_found represents whether the original kmer was found or whether

@@ -8,6 +8,7 @@
 
 #include "kmer.h"
 
+/* WARNING - This must be larger than k. */
 const size_t SUBCONTIG_LEN = 400;         /* Length in bases */
 
 class Contig {
@@ -23,7 +24,13 @@ public:
      * false otherwise. The join may fail if next_contig's left extension
      * doesn't match up.
      */
+    bool can_join_contig(Contig* next_contig);
     bool join_contig(Contig* next_contig);
+
+    /* Reverse complements the current contig. */
+    void revcmp(void);
+
+    void generate_hashes(void);
 
     void fprint(FILE* outfile);
     void fprintln(FILE* outfile);
@@ -31,12 +38,17 @@ public:
 public:
     exts_t exts;
     size_t len;
-    int32_t id;
-    int32_t next_id;
+    uint32_t id;
+    size_t hash;
+    size_t extended_hash;       /* Hash of kmer when extended to right. */
+    size_t revcmp_hash;
 
 protected:
-    static int32_t id_generator;
+    void get_extended_kmer(kmer_t extended_kmer);
+
+    static uint32_t id_generator;
     static k_t k;
+    static size_t seed;
 
     std::vector<kmer_t> subcontigs;
 };
