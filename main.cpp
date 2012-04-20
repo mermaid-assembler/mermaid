@@ -12,6 +12,7 @@
 #include "config.h"
 #include "kmer_count_store.h"
 #include "contig.h"
+#include "utils.h"
 
 using namespace std;
 namespace mpi = boost::mpi;
@@ -345,6 +346,8 @@ void print_ufxs(char* outprefix, KmerCountStore& kmer_store, int rank)
     stringstream ss;
     ss << outprefix << ".ufx." << rank;
     FILE* outfile = fopen(ss.str().c_str(), "w");
+    if (outfile == NULL)
+        panic("Could not open file: %s\n", ss.str().c_str());
     kmer_store.print_ufxs(outfile);
     fclose(outfile);
 }
@@ -354,6 +357,8 @@ void print_contigs(char* outprefix, ContigStore& contig_store, int rank)
     stringstream ss;
     ss << outprefix << ".contig." << rank;
     FILE* outfile = fopen(ss.str().c_str(), "w");
+    if (outfile == NULL)
+        panic("Could not open file: %s\n", ss.str().c_str());
     contig_store.print_contigs(outfile);
     fclose(outfile);
 }
