@@ -47,3 +47,15 @@ void Contig::fprintln(FILE* outfile)
     fprint(outfile);
     fprintf(outfile, "\n");
 }
+
+void Contig::fprint_fasta(FILE* outfile, size_t textwidth)
+{
+    fprintf(outfile, ">contig %u len %lu\n", id, s.size());
+    size_t i;
+    for (i = 0; i < s.size() / textwidth; i++) {
+        string substr = s.substr(i * textwidth, textwidth);
+        fprintf(outfile, "%s\n", substr.c_str());
+    }
+    string substr = s.substr(i * textwidth, s.size() % textwidth);
+    fprintf(outfile, "%s\n", substr.c_str());
+}

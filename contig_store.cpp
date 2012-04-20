@@ -24,8 +24,8 @@ void ContigStore::print_contigs(FILE* outfile)
             it != contigs.end();
             it++) {
         Contig* contig = *it;
+        if (contig->s.size() < MIN_CONTIG_LEN) break;
 
-        fprintf(outfile, "id %d len %lu\n", contig->id, contig->s.size());
-        contig->fprintln(outfile);
+        contig->fprint_fasta(outfile, FASTA_TEXTWIDTH);
     }
 }

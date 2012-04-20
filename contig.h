@@ -9,9 +9,6 @@
 
 #include "kmer.h"
 
-/* WARNING - This must be larger than k. */
-const size_t SUBCONTIG_LEN = 400;         /* Length in bases */
-
 class Contig {
 public:
     static void set_k(k_t k) { Contig::k = k; }
@@ -29,6 +26,8 @@ public:
 
     void fprint(FILE* outfile);
     void fprintln(FILE* outfile);
+    /* Print formatted contig to file. */
+    void fprint_fasta(FILE* outfile, size_t textwidth);
 
 public:
     uint32_t id;

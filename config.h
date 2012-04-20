@@ -12,4 +12,7 @@ const k_t K = 41;
 
 const unsigned int PREFIX_ALLOC_LENGTH = 5;
 
+const size_t MIN_CONTIG_LEN = 100;
+const size_t FASTA_TEXTWIDTH = 50;
+
 #endif /* _CONFIG_H_ */
