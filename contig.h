@@ -3,6 +3,7 @@
 
 #include <cstdio>
 #include <vector>
+#include <string>
 
 #include <boost/cstdint.hpp>
 
@@ -15,42 +16,30 @@ class Contig {
 public:
     static void set_k(k_t k) { Contig::k = k; }
 
-    Contig();
-    ~Contig();
+    Contig(kmer_t init_kmer);
 
-    void append_base(base b);
-    void append_first_kmer(kmer_t kmer);
-    /* Appends a contig to this contig. Returns true if the join succeeded;
-     * false otherwise. The join may fail if next_contig's left extension
-     * doesn't match up.
+    /* Checks the given base 'next_left_ext' against the s[size - k] to see if
+     * they're the same. If the kmer overlaps properly, these bases should be
+     * the same.
      */
-    bool can_join_contig(Contig* next_contig);
-    bool join_contig(Contig* next_contig);
+    bool check_next_left_ext(base next_left_ext);
 
     /* Reverse complements the current contig. */
     void revcmp(void);
-
-    void generate_hashes(void);
 
     void fprint(FILE* outfile);
     void fprintln(FILE* outfile);
 
 public:
-    exts_t exts;
-    size_t len;
     uint32_t id;
-    size_t hash;
-    size_t extended_hash;       /* Hash of kmer when extended to right. */
-    size_t revcmp_hash;
+    std::string s;      /* string that represents the contig. */
+    base left_ext;
+    base right_ext;
 
 protected:
-    void get_extended_kmer(kmer_t extended_kmer);
-
     static uint32_t id_generator;
     static k_t k;
     static size_t seed;
-
-    std::vector<kmer_t> subcontigs;
 };
 
 #endif /* _CONTIG_H_ */

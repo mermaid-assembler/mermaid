@@ -67,7 +67,7 @@ void KmerCountStore::trim()
         ext_map_t ext_map = get_ext_map(qual_counts);
         if (ext_map.left || ext_map.right) {
             contig_map->map[kmer].ext_map = ext_map;
-            contig_map->map[kmer].contig_id = -1;
+            contig_map->map[kmer].contig_found = false;
         } else {
             free(kmer);
         }
@@ -147,7 +147,7 @@ static bool can_use_in_contig(kmer_info_t& kmer_info)
 
 /* WARNING - This function assumes the given side of the ext_map has only one
  * bit set. */
-static base ext_map_side2base(uint8_t side)
+static base ext_map_side_to_base(uint8_t side)
 {
     for (uint8_t i = 0; i < BASE::NUM_BASES; i++) {
         if (side & 1 << i)
@@ -178,6 +178,44 @@ KmerCountStore::contig_map_type_t::iterator KmerCountStore::get_next_kmer(kmer_t
     return it;
 }
 
+void KmerCountStore::walk(Contig* contig, base next_ext)
+{
+    kmer_a kmer[kmer_size(k)];
+    bool revcmp_found;
+    base left_ext;
+    base right_ext;
+
+    while (1) {
+        for (size_t i = 0; i < k - 1; i++) {
+            base b = char2base(contig->s[contig->s.size() - (k - 1) + i]);
+            set_base(kmer, i, b);
+        }
+        set_base(kmer, k - 1, next_ext);
+
+        contig_map_type_t::iterator it = get_next_kmer(kmer, revcmp_found);
+        if (it == contig_map->map.end()) break;
+
+        kmer_info_t& kmer_info = it->second;
+        if (!can_use_in_contig(kmer_info)) break;
+
+        if (!revcmp_found) {
+            left_ext = ext_map_side_to_base(kmer_info.ext_map.left);
+            right_ext = ext_map_side_to_base(kmer_info.ext_map.right);
+        } else {
+            left_ext = inv_base(ext_map_side_to_base(kmer_info.ext_map.right));
+            right_ext = inv_base(ext_map_side_to_base(kmer_info.ext_map.left));
+        }
+
+        if (!contig->check_next_left_ext(left_ext)) break;
+
+        contig->s += base2char(next_ext);
+        kmer_info.contig_found = true;
+        next_ext = right_ext;
+    }
+    contig->right_ext = next_ext;
+}
+
+#if 0
 int32_t KmerCountStore::build_contig(Contig* contig, kmer_t beg_kmer, kmer_info_t& beg_kmer_info)
 {
     kmer_a subcontig[kmer_size(SUBCONTIG_LEN)];
@@ -282,6 +320,7 @@ int32_t KmerCountStore::build_contig(Contig* contig, kmer_t beg_kmer, kmer_info_
     //    }
     //}
 }
+#endif
 
 void KmerCountStore::build_contigs(ContigStore& contig_store)
 {
@@ -294,13 +333,15 @@ void KmerCountStore::build_contigs(ContigStore& contig_store)
 
         if (!can_use_in_contig(kmer_info))
             continue;
-        if (kmer_info.contig_id >= 0)
+        if (kmer_info.contig_found)
             continue;
 
-        Contig* contig = new Contig();
-        int32_t next_id = build_contig(contig, kmer, kmer_info);
-        contig->generate_hashes();
-        contig_store.add_contig(contig, next_id);
+        Contig* contig = new Contig(kmer);
+        contig->left_ext = ext_map_side_to_base(kmer_info.ext_map.left);
+        walk(contig, ext_map_side_to_base(kmer_info.ext_map.right));
+        contig->revcmp();
+        walk(contig, contig->right_ext);
+        contig_store.add_contig(contig);
     }
 }
 

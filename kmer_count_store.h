@@ -21,7 +21,7 @@ typedef struct {
 
 typedef struct {
     ext_map_t ext_map;
-    int32_t contig_id;
+    bool contig_found;
 } kmer_info_t;
 
 typedef struct {
@@ -48,7 +48,7 @@ public:
 
 protected:
     /* Returns id of the next contig. */
-    int32_t build_contig(Contig* contig, kmer_t beg_kmer, kmer_info_t& beg_kmer_info);
+    void walk(Contig* contig, base next_ext);
     /* Takes the kmer from scratch_kmer and looks for the next kmer in
      * contig_map. If found, returns true; otherwise false is returned.
      * revcmp_found represents whether the original kmer was found or whether

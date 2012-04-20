@@ -11,13 +11,11 @@ class ContigStore {
 public:
     ContigStore();
 
-    void add_contig(Contig* contig, int32_t next_id);
-    void join_contigs(void);
+    void add_contig(Contig* contig);
 
     void print_contigs(FILE* outfile);
 
 protected:
-    std::map<uint32_t, Contig*> contigs;
-    std::map<size_t, std::map<uint32_t, Contig*> > hash_id_map;
+    std::vector<Contig*> contigs;
 };
 #endif /* _CONTIG_STORE_H_ */
