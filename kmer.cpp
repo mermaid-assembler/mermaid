@@ -3,6 +3,7 @@
 
 #include "kmer.h"
 #include "config.h"
+#include "utils.h"
 
 int cmp_kmer(kmer_t kmer1, kmer_t kmer2, k_t len, k_t start1, k_t start2)
 {
@@ -116,4 +117,10 @@ bool validate_kmer(kmer_t kmer, k_t len)
             return false;
     } end_for;
     return true;
+}
+
+void assert_kmer(kmer_t kmer, k_t len)
+{
+    if (!validate_kmer(kmer, len))
+        panic("%s\n", __func__);
 }

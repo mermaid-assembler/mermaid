@@ -97,4 +97,7 @@ bool kmer_eq_K(kmer_t x, kmer_t y);
 
 bool validate_kmer(kmer_t kmer, k_t len);
 
+/* Validates kmer and on failure raises an error. */
+void assert_kmer(kmer_t kmer, k_t len);
+
 #endif /* _KMER_H_ */

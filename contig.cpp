@@ -209,21 +209,15 @@ void Contig::generate_hashes(void)
 
     kmer_a extended_kmer[kmer_size(k)];
     kmer_a revcmp[kmer_size(k)];
-    size_t subidx = len / SUBCONTIG_LEN;
-    size_t sublen = len % SUBCONTIG_LEN;
-    ssize_t prev_sublen = sublen - k;
 
-    for (ssize_t i = prev_sublen; i < (ssize_t) sublen; i++) {
-        base b;
-        if (prev_sublen < 0)
-            b = get_base(subcontigs[subidx - 1], i + SUBCONTIG_LEN);
-        else
-            b = get_base(subcontigs[subidx], i);
+    for (size_t i = 0; i < k; i++) {
+        size_t subidx = (len - k + i) / SUBCONTIG_LEN;
+        size_t sublen = (len - k + i) % SUBCONTIG_LEN;
 
-        set_base(revcmp, (k - 1) - (i - prev_sublen), inv_base(b));
-        if (i != prev_sublen) {
-            set_base(extended_kmer, i - prev_sublen - 1, b);
-        }
+        base b = get_base(subcontigs[subidx], sublen);
+        set_base(revcmp, (k - 1) - i, inv_base(b));
+        if (i > 0)
+            set_base(extended_kmer, i - 1, b);
     }
     set_base(extended_kmer, k - 1, (base) exts.right);
 
@@ -251,18 +245,12 @@ void Contig::fprintln(FILE* outfile)
 
 void Contig::get_extended_kmer(kmer_t extended_kmer)
 {
-    size_t subidx = len / SUBCONTIG_LEN;
-    size_t sublen = len % SUBCONTIG_LEN;
-    ssize_t prev_sublen = sublen - (k - 1);
+    for (size_t i = 0; i < k - 1; i++) {
+        size_t subidx = (len - (k - 1) + i) / SUBCONTIG_LEN;
+        size_t sublen = (len - (k - 1) + i) % SUBCONTIG_LEN;
 
-    for (ssize_t i = prev_sublen; i < (ssize_t) sublen; i++) {
-        base b;
-        if (prev_sublen < 0)
-            b = get_base(subcontigs[subidx - 1], i + SUBCONTIG_LEN);
-        else
-            b = get_base(subcontigs[subidx], i);
-
-        set_base(extended_kmer, i - prev_sublen, b);
+        base b = get_base(subcontigs[subidx], sublen);
+        set_base(extended_kmer, i, b);
     }
     set_base(extended_kmer, k - 1, (base) exts.right);
 }

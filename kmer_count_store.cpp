@@ -74,7 +74,7 @@ void KmerCountStore::trim()
     }
 
     counts_map->map.clear();
-    free(counts_map);
+    delete counts_map;
     counts_map = NULL;
 }
 
