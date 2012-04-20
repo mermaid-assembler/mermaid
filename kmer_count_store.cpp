@@ -197,6 +197,7 @@ void KmerCountStore::walk(Contig* contig, base next_ext)
 
         kmer_info_t& kmer_info = it->second;
         if (!can_use_in_contig(kmer_info)) break;
+        if (kmer_info.contig_found) break;
 
         if (!revcmp_found) {
             left_ext = ext_map_side_to_base(kmer_info.ext_map.left);

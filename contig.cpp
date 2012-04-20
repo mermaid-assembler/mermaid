@@ -16,7 +16,7 @@ size_t Contig::seed = 0;
 Contig::Contig(kmer_t init_kmer)
     : id(id_generator++), s(), left_ext(), right_ext()
 {
-    char kmer_str[kmer_size(k)];
+    char kmer_str[k + 1];
     kmer2str(kmer_str, init_kmer, k);
     s = kmer_str;
 }
