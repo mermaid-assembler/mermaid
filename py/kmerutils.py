@@ -46,6 +46,39 @@ def int_value(kmer):
 def revcmp_kmer(kmer):
     return ''.join([inv_base(b) for b in kmer[::-1]])
 
+def canonize(kmer):
+    revcmp = revcmp_kmer(kmer)
+    if revcmp < kmer:
+        return revcmp
+    else:
+        return kmer
+
+class FastAReader(object):
+    def __init__(self, fname):
+        self.f = open(fname)
+        self.f.readline()
+
+    def next_contig(self):
+        contig = ''
+        while True:
+            read = self.f.readline().strip()
+            if read == '' or read[0] == '>':
+                return contig
+            contig += read
+
+    def contigs(self):
+        while True:
+            contig = ''
+            while True:
+                read = self.f.readline().strip()
+                if read == '':
+                    return
+                elif read[0] == '>':
+                    break
+                else:
+                    contig += read
+            yield contig
+
 class FastQReader(object):
     def __init__(self, fname):
         self.f = open(fname, 'r')
