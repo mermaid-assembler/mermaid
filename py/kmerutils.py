@@ -72,6 +72,8 @@ class FastAReader(object):
             while True:
                 read = self.f.readline().strip()
                 if read == '':
+                    if contig:
+                        yield contig
                     return
                 elif read[0] == '>':
                     break
