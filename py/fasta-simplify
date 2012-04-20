@@ -6,7 +6,7 @@ from kmerutils import FastAReader, canonize
 
 def main():
     if len(sys.argv) != 2:
-        print("Usage: %s infile outfile" % sys.argv[0])
+        print("Usage: %s infile" % sys.argv[0])
         sys.exit(2)
     
     reader = FastAReader(sys.argv[1])
