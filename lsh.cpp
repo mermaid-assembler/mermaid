@@ -3,7 +3,7 @@
 #include "base.h"
 
 typedef uint32_t shingle_t;
-static size_t SHINGLE_LEN = 6; /* This can be at most 16 */
+static size_t SHINGLE_LEN = 16; /* This can be at most 16 */
 
 void get_shingles(shingle_t* shingles, kmer_t kmer, size_t num_shingles)
 {
