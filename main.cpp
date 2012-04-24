@@ -13,6 +13,7 @@
 #include "kmer_count_store.h"
 #include "contig.h"
 #include "utils.h"
+#include "lsh.h"
 
 using namespace std;
 namespace mpi = boost::mpi;
@@ -28,7 +29,8 @@ static const k_t k = K;
 
 int get_kmer_bin(qekmer_t* qekmer, k_t k, int world_size)
 {
-    size_t hash = kmer_hash(0, qekmer->kmer, k);
+    //size_t hash = kmer_hash(0, qekmer->kmer, k);
+    size_t hash = lsh(qekmer->kmer, k);
     return hash % world_size;
 }
 
