@@ -25,12 +25,17 @@ namespace fs  = boost::filesystem;
 #define KMER_SIZE_TAG 1
 #define DONE_TAG 2
 
+#define LSH_ON 1
+
 static const k_t k = K;
 
 int get_kmer_bin(qekmer_t* qekmer, k_t k, int world_size)
 {
-    //size_t hash = kmer_hash(0, qekmer->kmer, k);
+#if LSH_ON
     size_t hash = lsh(qekmer->kmer, k);
+#else
+    size_t hash = kmer_hash(0, qekmer->kmer, k);
+#endif
     return hash % world_size;
 }
 
