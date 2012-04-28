@@ -9,7 +9,8 @@ namespace BASE {
             case 'C': return C;
             case 'G': return G;
             case 'T': return T;
-            case 'N': return N;
+            //case 'N': return N;
+            case 'N': return A;
             default: panic("Invalid %s: %u\n", __func__, c);
         }
     }
@@ -21,7 +22,7 @@ namespace BASE {
             case C: return 'C';
             case G: return 'G';
             case T: return 'T';
-            case N: return 'N';
+            //case N: return 'N';
             default: panic("Invalid %s: %u\n", __func__, b);
         }
     }
@@ -33,7 +34,7 @@ namespace BASE {
             case C: return G;
             case G: return C;
             case T: return A;
-            case N: return N;
+            //case N: return N;
             default: panic("Invalid %s: %u\n", __func__, b);
         }
     }
@@ -45,7 +46,7 @@ namespace BASE {
             case 'C': return 'G';
             case 'G': return 'C';
             case 'T': return 'A';
-            case 'N': return 'N';
+            //case 'N': return 'N';
             default: panic("Invalid %s: %u\n", __func__, c);
         }
     }
@@ -57,8 +58,8 @@ namespace BASE {
             case C:
             case G:
             case T:
-            case N:
-                return true;
+            //case N:
+            //    return true;
             default:
                 return false;
         }

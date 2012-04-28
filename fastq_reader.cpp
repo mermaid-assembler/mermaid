@@ -87,61 +87,73 @@ bool FastQReader::next_file()
 
 bool FastQReader::read_next(qekmer_t* qekmer)
 {
-    if (curr_path == paths.end()) {
-        return false;
-    } else if (!read_col && tell() >= max_byte) {
-        return false;
-    }
+    while (true) {
+        bool skip_kmer = false;
 
-    if (read_col ==  0) {
-        char read_buf[MAX_LINE_LEN];
-        char quals_buf[MAX_LINE_LEN];
-
-        /* Ignore the header line. */
-        curr_file.ignore(MAX_LINE_LEN, '\n');
-        /* Get the actual read. */
-        curr_file.getline(read_buf, MAX_LINE_LEN);
-        /* Ignore +. */
-        curr_file.ignore(MAX_LINE_LEN, '\n');
-        /* Getthe  quality scores. */
-        curr_file.getline(quals_buf, MAX_LINE_LEN);
-        read_len = strlen(read_buf);
-
-        str2kmer(read, read_buf, read_len);
-        for (size_t i = 0; i < read_len; i++) {
-            quals[i] = quals_buf[i] - ILLUMINA_QUAL_OFFSET;
+        if (curr_path == paths.end()) {
+            return false;
+        } else if (!read_col && tell() >= max_byte) {
+            return false;
         }
+
+        if (read_col ==  0) {
+            //char read_buf[MAX_LINE_LEN];
+            char quals_buf[MAX_LINE_LEN];
+
+            /* Ignore the header line. */
+            curr_file.ignore(MAX_LINE_LEN, '\n');
+            /* Get the actual read. */
+            curr_file.getline(read, MAX_LINE_LEN);
+            /* Ignore +. */
+            curr_file.ignore(MAX_LINE_LEN, '\n');
+            /* Getthe  quality scores. */
+            curr_file.getline(quals_buf, MAX_LINE_LEN);
+            read_len = strlen(read);
+
+            for (size_t i = 0; i < read_len; i++) {
+                quals[i] = quals_buf[i] - ILLUMINA_QUAL_OFFSET;
+            }
+        }
+
+        for (size_t i = 0; i < k; i++) {
+            char char_base = read[read_col + i];
+            if ( char_base == 'N') {
+                read_col = read_col + i + 1;
+                if (read_col > read_len - k) {
+                    seek_to_next_read();
+                    read_col = 0;
+                }
+                skip_kmer = true;
+                break;
+            }
+            base b = char2base(char_base);
+            set_base(qekmer->kmer, i, b);
+        }
+        if (skip_kmer) {
+            continue;
+        }
+
+        if (read_col == 0) {
+            qekmer->lqual = 0;
+        } else {
+            qekmer->exts.left = char2base(read[read_col - 1]);
+            qekmer->lqual = quals[read_col - 1];
+        }
+
+        if (read_col + k == read_len) {
+            qekmer->rqual = 0;
+        } else {
+            qekmer->exts.right = char2base(read[read_col + k]);
+            qekmer->rqual = quals[read_col + k];
+        }
+
+        read_col++;
+
+        if (read_col > read_len - k) {
+            seek_to_next_read();
+            read_col = 0;
+        }
+
+        return true;
     }
-
-    // WARNING: This memset may be needed.
-    //memset(qekmer, 0, qekmer_size(k));
-    base b;
-    for_base_in_kmer_from(b, read, k, read_col) {
-        set_base(qekmer->kmer, b_i_, b);
-    } end_for;
-
-    if (read_col == 0) {
-        qekmer->exts.left = BASE::N;
-        qekmer->lqual = 0;
-    } else {
-        qekmer->exts.left = get_base(read, read_col - 1);
-        qekmer->lqual = quals[read_col - 1];
-    }
-
-    if (read_col + k == read_len) {
-        qekmer->exts.right = BASE::N;
-        qekmer->rqual = 0;
-    } else {
-        qekmer->exts.right = get_base(read, read_col + k);
-        qekmer->rqual = quals[read_col + k];
-    }
-
-    read_col++;
-
-    if (read_col > read_len - k) {
-        seek_to_next_read();
-        read_col = 0;
-    }
-
-    return true;
 }

@@ -14,7 +14,7 @@ using BASE::base2char;
 using BASE::inv_base;
 
 /* This must be a power of 2. */
-const uint8_t BITS_PER_BASE = 4;
+const uint8_t BITS_PER_BASE = 2;
 const uint8_t BASES_PER_BYTE = 8 / BITS_PER_BASE;
 
 typedef uint8_t kmer_base_t;
@@ -23,15 +23,17 @@ typedef uint8_t kmer_a;     /* This type should be used for declaring arrays
                                that will hold kmers. */
 
 typedef uint8_t qual_t;
-typedef uint32_t count_t;
+typedef uint16_t count_t;
+
+typedef struct {
+    uint8_t left : BITS_PER_BASE;
+    uint8_t right : BITS_PER_BASE;
+} exts_t;
 
 typedef struct {
     qual_t lqual;
     qual_t rqual;
-    struct {
-       uint8_t left : 4;
-       uint8_t right : 4;
-    } exts;
+    exts_t exts;
     kmer_a kmer[0];
 } __attribute__((packed)) qekmer_t;
 

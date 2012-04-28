@@ -39,7 +39,7 @@ protected:
     uintmax_t so_far;           // At the granularity of files
     uintmax_t max_byte;
 
-    kmer_a read[kmer_size(MAX_LINE_LEN)];    /* In 'base' type. */
+    char read[MAX_LINE_LEN];    /* In 'base' type. */
     qual_t quals[MAX_LINE_LEN];
     size_t read_col;            /* The column index within the current read that
                                    the next kmer (acutal kmer; not k+2-mer)
