@@ -60,7 +60,7 @@ void NetHub::copy_to_buffer(size_t node_id, void* data, size_t data_len)
         send_packets[node_id].size += copy_len;
         bytes_copied += copy_len;
 
-        if ((send_packets[node_id].size) >= recv_packets[node_id].size) {
+        if ((send_packets[node_id].size) >= BUFFER_SIZE) {
             flush(node_id);
         }
     }
@@ -73,7 +73,7 @@ void NetHub::copy_to_buffer(size_t node_id, void* data, size_t data_len)
  * If a packet spans multiple buffers, the last chunk is flushed to ensure
  * that we don't have half-sent packets
  */
-void NetHub::vsend(size_t node_id, void* data, size_t payload_size)
+void NetHub::vsend(size_t node_id, void* payload, size_t payload_size)
 {
     size_t header_size = sizeof(size_t);
     size_t packet_size = header_size + payload_size;
@@ -82,7 +82,7 @@ void NetHub::vsend(size_t node_id, void* data, size_t payload_size)
     /* Set header */
     copy_to_buffer(node_id, &payload_size, header_size);
     /* Copy payload */
-    copy_to_buffer(node_id, data, packet_size);
+    copy_to_buffer(node_id, payload, payload_size);
 
     /* Flush last chunk for data which spans multiple objects */
     if (span_multiple_buffers) flush(node_id);
@@ -141,12 +141,12 @@ void NetHub::copy_from_buffer(size_t node_id, void* data, size_t data_len)
 {
     size_t bytes_copied = 0;
     while (bytes_copied < data_len) {
-        size_t size = recv_packets[node_id].size;
+        size_t idx = recv_packet_idxs[node_id];
         size_t bytes_remaining = data_len - bytes_copied;
-        size_t copy_len = min(bytes_remaining, BUFFER_SIZE - size);
+        size_t copy_len = min(bytes_remaining, BUFFER_SIZE - idx);
 
-        memcpy(data, &recv_packets[node_id].buffer[size], copy_len);
-        recv_packets[node_id].size += copy_len;
+        memcpy(data, &recv_packets[node_id].buffer[idx], copy_len);
+        recv_packet_idxs[node_id] += copy_len;
         bytes_copied += copy_len;
 
         if (recv_packet_idxs[node_id] >= recv_packets[node_id].size) {

@@ -421,6 +421,14 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
+    //{
+    //    printf("PID %d on %d ready for attach\n", getpid(), world.rank());
+    //    fflush(stdout);
+    //    volatile int i = 0;
+    //    while (0 == i)
+    //        sleep(5);
+    //}
+
     FastQReader* reader = get_reader(argc - 2, &argv[2], world, k);
 
     KmerCountStore kmer_store(k);
