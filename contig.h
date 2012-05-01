@@ -13,6 +13,7 @@ class Contig {
 public:
     static void set_k(k_t k) { Contig::k = k; }
 
+    Contig();
     Contig(kmer_t init_kmer);
 
     /* Checks the given base 'next_left_ext' against the s[size - k] to see if

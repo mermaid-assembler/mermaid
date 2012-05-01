@@ -15,6 +15,11 @@ public:
 
     void print_contigs(FILE* outfile);
 
+    typedef std::vector<Contig*>::iterator iterator;
+
+    iterator begin() { return contigs.begin(); };
+    iterator end() { return contigs.end(); };
+
 protected:
     std::vector<Contig*> contigs;
 };

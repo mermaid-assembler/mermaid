@@ -347,6 +347,70 @@ void print_contigs(char* outprefix, ContigStore& contig_store, int rank)
     fclose(outfile);
 }
 
+/* Collects contigs on to one process (rank == 0). */
+void gather_contigs(ContigStore& contig_store, mpi::communicator& world)
+{
+    // TODO: Do we need to free all the kmers in the kmer_count_store?
+
+    typedef struct {
+        size_t size;
+        base left_ext;
+        base right_ext;
+        char s[0];
+    } __attribute__((packed)) contig_info;
+
+    NetHub nethub(world, 0);
+
+    if (world.rank() == 0) {
+        bool node_done[world.size()];
+        for (int i = 0; i < world.size(); i++) {
+            node_done[i] = false;
+        }
+        bool all_done = false;
+        while (!all_done) {
+            all_done = true;
+            for (int i = 1; i < world.size(); i++) {
+                if (node_done[i]) continue;
+
+                int status;
+                contig_info* cinfo;
+                size_t size;
+                while ((status = nethub.vrecv(i, (void**) &cinfo, &size)) == 0) {
+                    Contig* contig = new Contig();
+                    contig->left_ext = cinfo->left_ext;
+                    contig->right_ext = cinfo->right_ext;
+                    contig->s = std::string(cinfo->s, cinfo->size);
+                    free(cinfo);
+                    contig_store.add_contig(contig);
+                }
+
+                if (status == 1)
+                    node_done[i] = true;
+                else
+                    all_done = false;
+
+            }
+        }
+    }
+    else /* world.rank() != 0 */
+    {
+        for (ContigStore::iterator it = contig_store.begin();
+             it != contig_store.end();
+             it++) {
+            Contig* c = *it;
+            size_t cinfo_size = sizeof(contig_info) + c->s.size();
+            contig_info* cinfo = (contig_info*) malloc(cinfo_size);
+            cinfo->size = c->s.size();
+            cinfo->left_ext = c->left_ext;
+            cinfo->right_ext = c->right_ext;
+            memcpy(cinfo->s, c->s.c_str(), cinfo->size);
+            nethub.vsend(0, cinfo, cinfo_size);
+            free(cinfo);
+        }
+        nethub.done();
+    }
+}
+
 int main(int argc, char* argv[])
 {
     mpi::environment env(argc, argv);
@@ -367,7 +431,13 @@ int main(int argc, char* argv[])
     kmer_store.build_contigs(contig_store);
 
     print_ufxs(argv[1], kmer_store, world.rank());
-    print_contigs(argv[1], contig_store, world.rank());
+    //print_contigs(argv[1], contig_store, world.rank());
+
+    gather_contigs(contig_store, world);
+
+    if (world.rank() == 0) {
+        print_contigs(argv[1], contig_store, world.rank());
+    }
 
     //if (world.rank() == 0) {
     //    FILE* outfile = fopen(argv[1], "w");

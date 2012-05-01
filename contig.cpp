@@ -13,6 +13,11 @@ uint32_t Contig::id_generator = 0;
 k_t Contig::k = K;      /* TODO - Set this dynamically. */
 size_t Contig::seed = 0;
 
+Contig::Contig()
+    : id(id_generator++), s(), left_ext(), right_ext()
+{
+}
+
 Contig::Contig(kmer_t init_kmer)
     : id(id_generator++), s(), left_ext(), right_ext()
 {

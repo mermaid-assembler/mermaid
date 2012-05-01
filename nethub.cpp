@@ -2,6 +2,8 @@
 
 #include "nethub.h"
 
+#define min(a,b) ((a) < (b)) ? (a) : (b)
+
 namespace mpi = boost::mpi;
 
 NetHub::NetHub(mpi::communicator& world, size_t data_size)
@@ -42,6 +44,48 @@ void NetHub::send(size_t node_id, void* data)
     if ((send_packets[node_id].size + data_size) > BUFFER_SIZE) {
         flush(node_id);
     }
+}
+
+/* Copies data to buffer, automatically flushing when data_len exceeds the
+ * remaining buffer space */
+void NetHub::copy_to_buffer(size_t node_id, void* data, size_t data_len)
+{
+    size_t bytes_copied = 0;
+    while (bytes_copied < data_len) {
+        size_t size = send_packets[node_id].size;
+        size_t bytes_remaining = data_len - bytes_copied;
+        size_t copy_len = min(bytes_remaining, BUFFER_SIZE - size);
+
+        memcpy(&send_packets[node_id].buffer[size], data, copy_len);
+        send_packets[node_id].size += copy_len;
+        bytes_copied += copy_len;
+
+        if ((send_packets[node_id].size) >= recv_packets[node_id].size) {
+            flush(node_id);
+        }
+    }
+}
+
+/* Variable-length send
+ * Creates a special packet containing a simple header and a payload
+ *   header:  size_t payload_size;
+ *   payload: byte   data[payload_size];
+ * If a packet spans multiple buffers, the last chunk is flushed to ensure
+ * that we don't have half-sent packets
+ */
+void NetHub::vsend(size_t node_id, void* data, size_t payload_size)
+{
+    size_t header_size = sizeof(size_t);
+    size_t packet_size = header_size + payload_size;
+    bool span_multiple_buffers = packet_size > BUFFER_SIZE - send_packets[node_id].size;
+
+    /* Set header */
+    copy_to_buffer(node_id, &payload_size, header_size);
+    /* Copy payload */
+    copy_to_buffer(node_id, data, packet_size);
+
+    /* Flush last chunk for data which spans multiple objects */
+    if (span_multiple_buffers) flush(node_id);
 }
 
 void NetHub::flush(size_t node_id)
@@ -90,5 +134,50 @@ int NetHub::recv(size_t node_id, void* data)
         recv_packet_idxs[node_id] = 0;
     }
     
+    return 0;
+}
+
+void NetHub::copy_from_buffer(size_t node_id, void* data, size_t data_len)
+{
+    size_t bytes_copied = 0;
+    while (bytes_copied < data_len) {
+        size_t size = recv_packets[node_id].size;
+        size_t bytes_remaining = data_len - bytes_copied;
+        size_t copy_len = min(bytes_remaining, BUFFER_SIZE - size);
+
+        memcpy(data, &recv_packets[node_id].buffer[size], copy_len);
+        recv_packets[node_id].size += copy_len;
+        bytes_copied += copy_len;
+
+        if (recv_packet_idxs[node_id] >= recv_packets[node_id].size) {
+            recv_requests[node_id] = world.irecv(node_id, ACTIVE_TAG,
+                    (uint8_t*) &recv_packets[node_id], sizeof(nethub_packet_t));
+            recv_packet_idxs[node_id] = 0;
+            /* Spin-wait until next response arrives */
+            while (!recv_requests[node_id].test());
+        }
+    }
+}
+
+/* Receives a packet, changes a handle to point to the payload. Allocates space
+ * for the whole payload. */
+int NetHub::vrecv(size_t node_id, void** data, size_t* payload_size)
+{
+    /* Check to see if we have any request objects which have received packets.
+     * If not, return -1 right away (non-blocking). */
+    if (!recv_requests[node_id].test()) {
+        return -1;
+    }
+
+    /* If we received a packet and the size is 0, that means the node that sent
+     * that packet is done sending packets. */
+    if (!recv_packets[node_id].size) {
+        return 1;
+    }
+
+    copy_from_buffer(node_id, payload_size, sizeof(size_t));
+    *data = malloc(*payload_size);
+    copy_from_buffer(node_id, *data, *payload_size);
+
     return 0;
 }

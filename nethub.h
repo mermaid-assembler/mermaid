@@ -24,6 +24,7 @@ public:
     ~NetHub();
 
     void send(size_t node_id, void* data);
+    void vsend(size_t node_id, void* data, size_t payload_size);
     void done();
 
     /**
@@ -33,9 +34,12 @@ public:
      * 1 if we got DONE_TAG.
      */
     int recv(size_t node_id, void* data);
+    int vrecv(size_t node_id, void** data, size_t* payload_size);
 
 private:
     void flush(size_t node_id);
+    void copy_to_buffer(size_t node_id, void* data, size_t data_len);
+    void copy_from_buffer(size_t node_id, void* data, size_t data_len);
 
     size_t data_size;
 
