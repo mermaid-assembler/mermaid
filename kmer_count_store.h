@@ -43,6 +43,7 @@ public:
     void trim();
 
     void print_ufxs(FILE* outfile);
+    void load_ufxs(FILE* infile);
 
     void build_contigs(ContigStore& contig_store);
 

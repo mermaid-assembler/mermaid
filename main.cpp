@@ -25,7 +25,12 @@ namespace fs  = boost::filesystem;
 #define KMER_SIZE_TAG 1
 #define DONE_TAG 2
 
-#define LSH_ON 1
+#define LSH_ON 0
+
+#ifndef KMER_COUNT_ON
+// Set to 0 if you want to load from *.ufx.* instead of reading from fastq file
+#define KMER_COUNT_ON 0
+#endif
 
 static const k_t k = K;
 
@@ -325,7 +330,7 @@ void build_contigs(vector<Contig*>& contigs, HashMap<kmer_t, kmer_info_t> kmer_m
 }
 #endif
 
-void print_ufxs(char* outprefix, KmerCountStore& kmer_store, int rank)
+void print_ufxs(const char* outprefix, KmerCountStore& kmer_store, int rank)
 {
     stringstream ss;
     ss << outprefix << ".ufx." << rank;
@@ -334,6 +339,17 @@ void print_ufxs(char* outprefix, KmerCountStore& kmer_store, int rank)
         panic("Could not open file: %s\n", ss.str().c_str());
     kmer_store.print_ufxs(outfile);
     fclose(outfile);
+}
+
+void load_ufxs(char* file_prefix, KmerCountStore& kmer_store, int rank)
+{
+    stringstream ss;
+    ss << file_prefix << ".ufx." << rank;
+    FILE* infile = fopen(ss.str().c_str(), "r");
+    if (infile == NULL)
+        panic("Could not open file: %s\n", ss.str().c_str());
+    kmer_store.load_ufxs(infile);
+    fclose(infile);
 }
 
 void print_contigs(char* outprefix, ContigStore& contig_store, int rank)
@@ -429,19 +445,26 @@ int main(int argc, char* argv[])
     //        sleep(5);
     //}
 
-    FastQReader* reader = get_reader(argc - 2, &argv[2], world, k);
-
     KmerCountStore kmer_store(k);
+
+#if KMER_COUNT_ON
+    FastQReader* reader = get_reader(argc - 2, &argv[2], world, k);
     build_store(reader, kmer_store, world);
     kmer_store.trim();
+#else
+    load_ufxs(argv[1], kmer_store, world.rank());
+#endif
+
+    print_ufxs("testOutput", kmer_store, world.rank());
+
 
     ContigStore contig_store;
     kmer_store.build_contigs(contig_store);
 
-    print_ufxs(argv[1], kmer_store, world.rank());
-    //print_contigs(argv[1], contig_store, world.rank());
+    //print_ufxs(argv[1], kmer_store, world.rank());
+    print_contigs(argv[1], contig_store, world.rank());
 
-    gather_contigs(contig_store, world);
+    //gather_contigs(contig_store, world);
 
     if (world.rank() == 0) {
         print_contigs(argv[1], contig_store, world.rank());

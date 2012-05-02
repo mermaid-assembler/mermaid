@@ -130,6 +130,60 @@ void KmerCountStore::print_ufxs(FILE* outfile)
     }
 }
 
+static ext_map_t base2ext_map(char l, char r)
+{
+    ext_map_t ext_map = {0, 0};
+    switch (l)
+    {
+        case 'A': ext_map.left = 1; break;
+        case 'C': ext_map.left = 2; break;
+        case 'G': ext_map.left = 4; break;
+        case 'T': ext_map.left = 8; break;
+        case 'F': ext_map.left = 15; break; // Not sure what I should do with this
+        case 'X': ext_map.left = 0; break;
+        default: panic ("Invalid base");
+    }
+    switch (r)
+    {
+        case 'A': ext_map.right = 1; break;
+        case 'C': ext_map.right = 2; break;
+        case 'G': ext_map.right = 4; break;
+        case 'T': ext_map.right = 8; break;
+        case 'F': ext_map.right = 15; break; // Not sure what I should do with this
+        case 'X': ext_map.right = 0; break;
+        default: panic ("Invalid base");
+    }
+    return ext_map;
+}
+
+bool is_canonical_kmer(kmer_t kmer, k_t k)
+{
+    kmer_a revcmp_a[k];
+    kmer_t revcmp = revcmp_a;
+    revcmp_kmer(revcmp, kmer, k);
+    return cmp_kmer(kmer, revcmp,k) <= 0;
+}
+
+/* Move this some place neater */
+void KmerCountStore::load_ufxs(FILE* infile)
+{
+    char kmer_str[k + 1];
+    char left_ext;
+    char right_ext;
+
+    contig_map = new HashMap<kmer_t, kmer_info_t>(INITIAL_CAPACITY, 0,
+            (hash_map_hash_func_t) kmer_hash_K,
+            (hash_map_eq_func_t) kmer_eq_K, kmer_size(k));
+    while (fscanf(infile, "%s %c%c", kmer_str, &left_ext, &right_ext) != EOF) {
+        kmer_t kmer = (kmer_t) malloc(kmer_size(k));
+        str2kmer(kmer, kmer_str, k);
+        if (!is_canonical_kmer(kmer, k)) continue;
+        ext_map_t ext_map = base2ext_map(left_ext, right_ext);
+        contig_map->map[kmer].ext_map = ext_map;
+        contig_map->map[kmer].contig_found  = false;
+    }
+}
+
 static bool can_use_in_contig(kmer_info_t& kmer_info)
 {
     uint8_t valid_left_bases = 0;
