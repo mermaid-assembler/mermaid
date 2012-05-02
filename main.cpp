@@ -29,7 +29,8 @@ namespace fs  = boost::filesystem;
 
 #ifndef KMER_COUNT_ON
 // Set to 0 if you want to load from *.ufx.* instead of reading from fastq file
-#define KMER_COUNT_ON 0
+// Set to 1 if you want to run the kmer-count stage
+#define KMER_COUNT_ON 1
 #endif
 
 static const k_t k = K;
@@ -445,30 +446,33 @@ int main(int argc, char* argv[])
     //        sleep(5);
     //}
 
+    /* =======================
+     * Phase 1: k-mer counting
+     * ======================= */
     KmerCountStore kmer_store(k);
 
 #if KMER_COUNT_ON
     FastQReader* reader = get_reader(argc - 2, &argv[2], world, k);
     build_store(reader, kmer_store, world);
     kmer_store.trim();
+    print_ufxs(argv[1], kmer_store, world.rank());
 #else
     load_ufxs(argv[1], kmer_store, world.rank());
 #endif
 
-    print_ufxs("testOutput", kmer_store, world.rank());
-
-
+    /* =======================
+     * Phase 2: Contig walking
+     * ======================= */
     ContigStore contig_store;
     kmer_store.build_contigs(contig_store);
 
-    //print_ufxs(argv[1], kmer_store, world.rank());
     print_contigs(argv[1], contig_store, world.rank());
 
     //gather_contigs(contig_store, world);
 
-    if (world.rank() == 0) {
-        print_contigs(argv[1], contig_store, world.rank());
-    }
+    //if (world.rank() == 0) {
+    //    print_contigs(argv[1], contig_store, world.rank());
+    //}
 
     //if (world.rank() == 0) {
     //    FILE* outfile = fopen(argv[1], "w");

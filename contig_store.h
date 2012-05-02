@@ -15,6 +15,8 @@ public:
 
     void print_contigs(FILE* outfile);
 
+    size_t size() { return contigs.size(); };
+
     typedef std::vector<Contig*>::iterator iterator;
 
     iterator begin() { return contigs.begin(); };

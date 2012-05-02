@@ -184,6 +184,7 @@ void KmerCountStore::load_ufxs(FILE* infile)
     }
 }
 
+/* Checks whether kmer is U-U */
 static bool can_use_in_contig(kmer_info_t& kmer_info)
 {
     uint8_t valid_left_bases = 0;
