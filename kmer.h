@@ -23,7 +23,9 @@ typedef uint8_t kmer_a;     /* This type should be used for declaring arrays
                                that will hold kmers. */
 
 typedef uint8_t qual_t;
-typedef uint16_t count_t;
+typedef uint16_t count_t; /* FIXME: We don't know if this is large enough for
+                             the kmer counts we may see in the human dataset.
+                             */
 
 typedef struct {
     uint8_t left : BITS_PER_BASE;
