@@ -46,6 +46,8 @@ public:
          map(initial_capacity, hash_func, eq_func)
     { }
 
+    // FIXME: Why does this silently fail? Can't we return NULL or a pointer
+    // to the newly allocated ValType?
     /* Tries to insert key into the hash map. Fails silently if the key already
      * exists in the map. */
     void try_insert(KeyType key)

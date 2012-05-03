@@ -6,23 +6,30 @@
 #include <map>
 
 #include "contig.h"
+#include "kmer.h"
+#include "hash_map.h"
 
 class ContigStore {
 public:
-    ContigStore();
+    ContigStore(k_t k);
 
     void add_contig(Contig* contig);
 
     void print_contigs(FILE* outfile);
 
-    size_t size() { return contigs.size(); };
+    size_t size() { return contigs.map.size(); };
 
-    typedef std::vector<Contig*>::iterator iterator;
+    //typedef std::vector<Contig*>::iterator iterator;
+    typedef HashMap<kmer_t, Contig*>::map_type_t contig_map_type_t;
+    typedef contig_map_type_t::iterator iterator;
 
-    iterator begin() { return contigs.begin(); };
-    iterator end() { return contigs.end(); };
+    iterator begin() { return contigs.map.begin(); };
+    iterator end() { return contigs.map.end(); };
 
 protected:
-    std::vector<Contig*> contigs;
+    //std::vector<Contig*> contigs;
+    HashMap<kmer_t, Contig*> contigs;
+
+    k_t k;
 };
 #endif /* _CONTIG_STORE_H_ */
