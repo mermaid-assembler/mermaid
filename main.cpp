@@ -234,39 +234,45 @@ void gather_contigs(ContigStore& contig_store, mpi::communicator& world)
     }
 }
 
+void walk(Contig* contig, ContigStore& contig_store)
+{
+    kmer_a kmer[kmer_size(k)];
+    bool revcmp_found = false;
+    while(true) {
+        contig->next_kmer(kmer);
+        ContigStore::iterator ext = contig_store.find(kmer, revcmp_found);
+        if (contig_store.is_end(ext)) break;
+
+        Contig* next_contig = ext->second;
+        if (contig == next_contig) break;
+        if (next_contig->s.size() == 0) break;
+
+        if (revcmp_found) {
+            next_contig->revcmp();
+        }
+        // FIXME: There are probably memory leak issues with not freeing kmers
+        contig->s.append(next_contig->s, k-1, next_contig->s.size() - (k-1));
+        contig->right_ext = next_contig->right_ext;
+
+        next_contig->s.clear();
+    }
+}
+
 void build_contigs(ContigStore& contig_store)
 {
-    /* (Python notation)
-     * for c in contigs:
-     *   right_ext_kmer = c[-(k-1):] + right_ext
-     *   while d = contigs.find(right_ext_kmer):
-     *     what this means is find a contig d s.t.
-     *       d[:k] == right_ext_kmer
-     *     remember to consider rev_cmps
-     *     if d:
-     *       c = c + d[k-1:]
-     *       right_ext = d.right_ext
-     *       del d
-     *   repeat with reverse contigs
-     */
     for (ContigStore::iterator it = contig_store.begin();
             it != contig_store.end();
             it++)
     {
         Contig* contig = it->second;
-        kmer_a kmer[kmer_size(k)];
-        bool revcmp_found = false;
-        contig->next_kmer(kmer);
-        ContigStore::iterator ext = contig_store.find(kmer, revcmp_found);
-        if (ext == contig_store.end()) continue;
+        if (contig->s.size() == 0) continue;
 
-        Contig* next_contig = ext->second;
-        if (contig == next_contig) continue;
-
-        contig->s.append(next_contig->s, k-1, next_contig->s.size() - (k-1));
-        contig->right_ext = next_contig->right_ext;
-        delete next_contig;
+        walk(contig, contig_store);
+        contig->revcmp();
+        walk(contig, contig_store);
+        contig_store.add_to_final_contigs(it->second);
     }
+    contig_store.trim();
 }
 
 int main(int argc, char* argv[])
@@ -279,6 +285,7 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
+    //if (world.rank() == 0)
     //{
     //    printf("PID %d on %d ready for attach\n", getpid(), world.rank());
     //    fflush(stdout);

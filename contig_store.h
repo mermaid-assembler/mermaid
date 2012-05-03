@@ -14,12 +14,12 @@ public:
     ContigStore(k_t k);
 
     void add_contig(Contig* contig);
+    void add_to_final_contigs(Contig* contig);
 
     void print_contigs(FILE* outfile);
 
     size_t size() { return contigs.map.size(); };
 
-    //typedef std::vector<Contig*>::iterator iterator;
     typedef HashMap<kmer_t, Contig*>::map_type_t contig_map_type_t;
     typedef contig_map_type_t::iterator iterator;
 
@@ -28,9 +28,18 @@ public:
     iterator begin() { return contigs.map.begin(); };
     iterator end() { return contigs.map.end(); };
 
+    /* This is necessary because we have two maps now... */
+    bool is_end(iterator it);
+    void trim();
+
 protected:
-    //std::vector<Contig*> contigs;
+    // FIXME: Use a densehash instead of a sparsehash
     HashMap<kmer_t, Contig*> contigs;
+    /* This hashes contigs based on the first k bases of their reverse
+     * complement.  Note that the contigs themselves are not duplicated, we
+     * just have two keys which map to each contig.*/
+    HashMap<kmer_t, Contig*> revmap_contigs;
+    std::vector<Contig*> final_contigs;
 
     k_t k;
 };
