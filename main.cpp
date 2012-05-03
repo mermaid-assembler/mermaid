@@ -249,6 +249,24 @@ void build_contigs(ContigStore& contig_store)
      *       del d
      *   repeat with reverse contigs
      */
+    for (ContigStore::iterator it = contig_store.begin();
+            it != contig_store.end();
+            it++)
+    {
+        Contig* contig = it->second;
+        kmer_a kmer[kmer_size(k)];
+        bool revcmp_found = false;
+        contig->next_kmer(kmer);
+        ContigStore::iterator ext = contig_store.find(kmer, revcmp_found);
+        if (ext == contig_store.end()) continue;
+
+        Contig* next_contig = ext->second;
+        if (contig == next_contig) continue;
+
+        contig->s.append(next_contig->s, k-1, next_contig->s.size() - (k-1));
+        contig->right_ext = next_contig->right_ext;
+        delete next_contig;
+    }
 }
 
 int main(int argc, char* argv[])

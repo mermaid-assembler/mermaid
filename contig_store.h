@@ -23,6 +23,8 @@ public:
     typedef HashMap<kmer_t, Contig*>::map_type_t contig_map_type_t;
     typedef contig_map_type_t::iterator iterator;
 
+    /* Find contig by its first k bases */
+    iterator find(kmer_t kmer, bool& revcmp_found);
     iterator begin() { return contigs.map.begin(); };
     iterator end() { return contigs.map.end(); };
 

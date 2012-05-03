@@ -38,6 +38,28 @@ void ContigStore::print_contigs(FILE* outfile)
     }
 }
 
+ContigStore::iterator ContigStore::find(kmer_t kmer, bool& revcmp_found)
+{
+    iterator it;
+    kmer_a revcmp[kmer_size(k)];
+
+    it = contigs.map.find(kmer);
+    if (it != contigs.map.end()) {
+        revcmp_found = false;
+        return it;
+    }
+
+    revcmp_kmer(revcmp, kmer, k);
+
+    it = contigs.map.find(revcmp);
+    if (it != contigs.map.end()) {
+        revcmp_found = true;
+        return it;
+    }
+
+    return it;
+}
+
 // vector versions:
 #if 0
 void ContigStore::add_contig(Contig* contig)
