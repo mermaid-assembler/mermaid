@@ -49,7 +49,7 @@ public:
 
 protected:
     /* Returns id of the next contig. */
-    void walk(Contig* contig, base next_ext);
+    void walk(Contig* contig);
     /* Takes the kmer from scratch_kmer and looks for the next kmer in
      * contig_map. If found, returns true; otherwise false is returned.
      * revcmp_found represents whether the original kmer was found or whether

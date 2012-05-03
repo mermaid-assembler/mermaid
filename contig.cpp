@@ -42,6 +42,16 @@ void Contig::revcmp(void)
     right_ext = inv_base(right_ext);
 }
 
+void Contig::next_kmer(kmer_t kmer)
+{
+    size_t start_idx = s.size() - (k-1);
+    for (size_t i = 0; i < k - 1; i++) {
+        base b = char2base(s[start_idx + i]);
+        set_base(kmer, i, b);
+    }
+    set_base(kmer, k - 1, right_ext);
+}
+
 void Contig::fprint(FILE* outfile)
 {
     fprintf(outfile, "%s", s.c_str());
