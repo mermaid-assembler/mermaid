@@ -1,5 +1,5 @@
-#ifndef _KMER_STORE_H_
-#define _KMER_STORE_H_
+#ifndef _KMER_COUNT_MAP_H_
+#define _KMER_COUNT_MAP_H_
 
 #include <vector>
 
@@ -30,4 +30,4 @@ protected:
     typedef HashMap<kmer_t, qual_counts_t>::map_type_t map_type_t;
 };
 
-#endif /* _KMER_STORE_H_ */
+#endif /* _KMER_COUNT_MAP_H_ */

@@ -1,5 +1,5 @@
-#ifndef _TRIMMED_KMER_STORE_H_
-#define _TRIMMED_KMER_STORE_H_
+#ifndef _KMER_EXT_MAP_H_
+#define _KMER_EXT_MAP_H_
 
 #include <cstdio>
 
@@ -30,4 +30,4 @@ protected:
     /* FIXME - Change this initial capacity using preprocessing step. */
     static const size_t INITIAL_CAPACITY = 100000;
 };
-#endif /* _TRIMMED_KMER_STORE_H_ */
+#endif /* _KMER_EXT_MAP_H_ */
