@@ -22,6 +22,7 @@ void KmerContigMap::insert(Contig* contig)
     for (size_t i = 0; i < k; i++)
         set_base(revcmp, i, char2base(contig->s[i]));
     revcmp_map->map[revcmp] = contig;
+    contig->revcmp();
 }
 
 void KmerContigMap::fprint_contigs(FILE* outfile, size_t min_contig_len)
