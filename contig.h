@@ -39,6 +39,9 @@ public:
     /* Checks for badness */
     void verify();
 
+    /* Checks whether contigs contains the given kmer. */
+    bool contains(const char* kmer);
+
 public:
     uint32_t id;
     std::string s;      /* string that represents the contig. */
