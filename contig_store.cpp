@@ -42,15 +42,15 @@ void ContigStore::add_to_final_contigs(Contig* contig)
     final_contigs.push_back(contig);
 }
 
-void ContigStore::print_contigs(FILE* outfile)
+void ContigStore::print_contigs(FILE* outfile, size_t min_contig_len)
 {
     for (vector<Contig*>::iterator it = final_contigs.begin();
             it != final_contigs.end();
             it++)
     {
         Contig* contig = *it;
-        if (contig->s.size() < MIN_CONTIG_LEN) continue;
-        contig->fprint_fasta(outfile, FASTA_TEXTWIDTH);
+        if (contig->s.size() >= min_contig_len)
+            contig->fprint_fasta(outfile, FASTA_TEXTWIDTH);
     }
 }
 
