@@ -16,7 +16,7 @@ public:
     void add(Contig* contig);
     //void add_to_final_contigs(Contig* contig);
 
-    void print_contigs(FILE* outfile, size_t min_contig_len = MIN_CONTIG_LEN);
+    void fprint_contigs(FILE* outfile, size_t min_contig_len = MIN_CONTIG_LEN);
 
     //typedef HashMap<kmer_t, Contig*>::map_type_t contig_map_type_t;
     //typedef contig_map_type_t::iterator iterator;
@@ -29,6 +29,7 @@ public:
     ///* This is necessary because we have two maps now... */
     //bool is_end(iterator it);
     //void trim();
+    std::vector<Contig*> contigs;
 
 protected:
     //// FIXME: Use a densehash instead of a sparsehash
@@ -40,6 +41,5 @@ protected:
     //std::vector<Contig*> final_contigs;
 
     k_t k;
-    std::vector<Contig*> contigs;
 };
 #endif /* _CONTIG_STORE_H_ */

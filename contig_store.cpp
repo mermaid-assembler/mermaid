@@ -18,7 +18,7 @@ void ContigStore::add(Contig* contig)
     contigs.push_back(contig);
 }
 
-void ContigStore::print_contigs(FILE* outfile, size_t min_contig_len)
+void ContigStore::fprint_contigs(FILE* outfile, size_t min_contig_len)
 {
     for (vector<Contig*>::iterator it = contigs.begin();
             it != contigs.end();

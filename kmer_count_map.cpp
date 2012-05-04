@@ -7,9 +7,6 @@
 
 #define FILTER_ON 0
 
-/* FIXME - Change this initial capacity using preprocessing step. */
-static const int INITIAL_CAPACITY = 100000;
-
 KmerCountMap::KmerCountMap(k_t k)
     : k(k),
     sb_filter(INITIAL_CAPACITY, 0.001, 0,

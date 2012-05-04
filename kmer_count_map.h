@@ -23,11 +23,14 @@ public:
     void trim(KmerExtMap& kmer_ext_map);
 
 protected:
+    typedef HashMap<kmer_t, qual_counts_t>::map_type_t map_type_t;
+
     k_t k;
     ScalableBloomFilter sb_filter;
     HashMap<kmer_t, qual_counts_t>* hash_map;
 
-    typedef HashMap<kmer_t, qual_counts_t>::map_type_t map_type_t;
+    /* FIXME - Change this initial capacity using preprocessing step. */
+    static const int INITIAL_CAPACITY = 100000;
 };
 
 #endif /* _KMER_COUNT_MAP_H_ */

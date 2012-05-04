@@ -15,6 +15,8 @@
 #include "contig.h"
 #include "utils.h"
 #include "lsh.h"
+#include "contig_store.h"
+#include "kmer_contig_map.h"
 
 using namespace std;
 namespace mpi = boost::mpi;
@@ -167,13 +169,23 @@ void print_contigs(char* outprefix, ContigStore& contig_store, int rank)
     FILE* outfile = fopen(ss.str().c_str(), "w");
     if (outfile == NULL)
         panic("Could not open file: %s\n", ss.str().c_str());
-    contig_store.print_contigs(outfile);
+    contig_store.fprint_contigs(outfile);
     fclose(outfile);
 }
 
-#if 0
+void print_contigs(char* outprefix, KmerContigMap& kmer_contig_map, int rank)
+{
+    stringstream ss;
+    ss << outprefix << ".contig." << rank;
+    FILE* outfile = fopen(ss.str().c_str(), "w");
+    if (outfile == NULL)
+        panic("Could not open file: %s\n", ss.str().c_str());
+    kmer_contig_map.fprint_contigs(outfile);
+    fclose(outfile);
+}
+
 /* Collects contigs on to one process (rank == 0). */
-void gather_contigs(ContigStore& contig_store, mpi::communicator& world)
+void gather_contigs(KmerContigMap& kmer_contig_map, ContigStore& contig_store, mpi::communicator& world)
 {
     // TODO: Do we need to free all the kmers in the kmer_count_map?
 
@@ -206,7 +218,7 @@ void gather_contigs(ContigStore& contig_store, mpi::communicator& world)
                     contig->right_ext = cpacket->right_ext;
                     contig->s = std::string(cpacket->s, cpacket->size);
                     //contig->verify();
-                    contig_store.add(contig);
+                    kmer_contig_map.insert(contig);
                     free(cpacket);
                 }
 
@@ -218,13 +230,15 @@ void gather_contigs(ContigStore& contig_store, mpi::communicator& world)
             }
         }
     }
-    else /* world.rank() != 0 */
-    {
-        for (ContigStore::iterator it = contig_store.begin();
-             it != contig_store.end();
-             it++) {
-            Contig* c = it->second;
-            //c->verify();
+
+    for (vector<Contig*>::iterator it = contig_store.contigs.begin();
+            it != contig_store.contigs.end();
+            it++) {
+        Contig* c = *it;
+        //c->verify();
+        if (world.rank() == 0) {
+            kmer_contig_map.insert(c);
+        } else {
             size_t cpacket_size = sizeof(contig_packet_t) + c->s.size();
             contig_packet_t* cpacket = (contig_packet_t*) malloc(cpacket_size);
             cpacket->size = c->s.size();
@@ -234,10 +248,11 @@ void gather_contigs(ContigStore& contig_store, mpi::communicator& world)
             nethub.vsend(0, cpacket, cpacket_size);
             free(cpacket);
         }
-        nethub.done();
     }
+    nethub.done();
 }
 
+#if 0
 void walk(Contig* contig, ContigStore& contig_store)
 {
     kmer_a kmer[kmer_size(k)];
@@ -320,16 +335,17 @@ int main(int argc, char* argv[])
      * Phase 2: Contig walking
      * ======================= */
     ContigStore contig_store(k);
+    KmerContigMap kmer_contig_map(k);
     kmer_ext_map.build_contigs(contig_store);
 
-    print_contigs(argv[1], contig_store, world.rank());
+    //print_contigs(argv[1], contig_store, world.rank());
 
-    //gather_contigs(contig_store, world);
+    gather_contigs(kmer_contig_map, contig_store, world);
 
-    //if (world.rank() == 0) {
-    //    build_contigs(contig_store);
-    //    print_contigs(argv[1], contig_store, world.rank());
-    //}
+    if (world.rank() == 0) {
+        //build_contigs(contig_store);
+        print_contigs(argv[1], kmer_contig_map, world.rank() + 100);
+    }
 
     return 0;
 }
