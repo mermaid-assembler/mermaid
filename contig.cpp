@@ -74,3 +74,21 @@ void Contig::fprint_fasta(FILE* outfile, size_t textwidth)
     string substr = s.substr(i * textwidth, s.size() % textwidth);
     fprintf(outfile, "%s\n", substr.c_str());
 }
+
+void Contig::verify()
+{
+    for (size_t i = 0; i < s.size(); i++)
+    {
+        char c = s[i];
+        switch (c)
+        {
+            case 'A':
+            case 'C':
+            case 'G':
+            case 'T':
+                break;
+            default:
+                panic("BAD BASE: %c\n", c);
+        }
+    }
+}

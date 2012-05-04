@@ -33,6 +33,9 @@ public:
     /* Print formatted contig to file. */
     void fprint_fasta(FILE* outfile, size_t textwidth);
 
+    /* Checks for badness */
+    void verify();
+
 public:
     uint32_t id;
     std::string s;      /* string that represents the contig. */

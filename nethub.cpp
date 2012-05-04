@@ -56,7 +56,7 @@ void NetHub::copy_to_buffer(size_t node_id, void* data, size_t data_len)
         size_t bytes_remaining = data_len - bytes_copied;
         size_t copy_len = min(bytes_remaining, BUFFER_SIZE - size);
 
-        memcpy(&send_packets[node_id].buffer[size], data, copy_len);
+        memcpy(&send_packets[node_id].buffer[size], ((uint8_t *) data) + bytes_copied, copy_len);
         send_packets[node_id].size += copy_len;
         bytes_copied += copy_len;
 
@@ -145,7 +145,7 @@ void NetHub::copy_from_buffer(size_t node_id, void* data, size_t data_len)
         size_t bytes_remaining = data_len - bytes_copied;
         size_t copy_len = min(bytes_remaining, BUFFER_SIZE - idx);
 
-        memcpy(data, &recv_packets[node_id].buffer[idx], copy_len);
+        memcpy(((uint8_t*) data) + bytes_copied, &recv_packets[node_id].buffer[idx], copy_len);
         recv_packet_idxs[node_id] += copy_len;
         bytes_copied += copy_len;
 

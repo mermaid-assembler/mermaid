@@ -203,8 +203,9 @@ void gather_contigs(ContigStore& contig_store, mpi::communicator& world)
                     contig->left_ext = cinfo->left_ext;
                     contig->right_ext = cinfo->right_ext;
                     contig->s = std::string(cinfo->s, cinfo->size);
-                    free(cinfo);
+                    //contig->verify();
                     contig_store.add_contig(contig);
+                    free(cinfo);
                 }
 
                 if (status == 1)
@@ -221,6 +222,7 @@ void gather_contigs(ContigStore& contig_store, mpi::communicator& world)
              it != contig_store.end();
              it++) {
             Contig* c = it->second;
+            //c->verify();
             size_t cinfo_size = sizeof(contig_info) + c->s.size();
             contig_info* cinfo = (contig_info*) malloc(cinfo_size);
             cinfo->size = c->s.size();
