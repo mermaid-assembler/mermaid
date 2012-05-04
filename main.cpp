@@ -247,6 +247,7 @@ void gather_contigs(KmerContigMap& kmer_contig_map, ContigStore& contig_store, m
             memcpy(cpacket->s, c->s.c_str(), cpacket->size);
             nethub.vsend(0, cpacket, cpacket_size);
             free(cpacket);
+            delete c;
         }
     }
     nethub.done();
@@ -314,33 +315,36 @@ int main(int argc, char* argv[])
     //        sleep(5);
     //}
 
-    /* =======================
-     * Phase 1: k-mer counting
-     * ======================= */
-    KmerExtMap kmer_ext_map(k);
+    KmerContigMap kmer_contig_map(k);
+
+    {
+        ContigStore contig_store(k);
+        /* =======================
+         * Phase 1: k-mer counting
+         * ======================= */
+        KmerExtMap kmer_ext_map(k);
 
 #if !LOAD_FROM_UFX
-    {
-        KmerCountMap kmer_count_map(k);
-        FastQReader* reader = get_reader(argc - 2, &argv[2], world, k);
-        build_store(reader, kmer_count_map, world);
-        kmer_count_map.trim(kmer_ext_map);
-    }
-    print_ufxs(argv[1], kmer_ext_map, world.rank());
+        {
+            KmerCountMap kmer_count_map(k);
+            FastQReader* reader = get_reader(argc - 2, &argv[2], world, k);
+            build_store(reader, kmer_count_map, world);
+            kmer_count_map.trim(kmer_ext_map);
+        }
+        print_ufxs(argv[1], kmer_ext_map, world.rank());
 #else
-    load_ufxs(argv[1], kmer_ext_map, world.rank());
+        load_ufxs(argv[1], kmer_ext_map, world.rank());
 #endif
 
-    /* =======================
-     * Phase 2: Contig walking
-     * ======================= */
-    ContigStore contig_store(k);
-    KmerContigMap kmer_contig_map(k);
-    kmer_ext_map.build_contigs(contig_store);
+        /* =======================
+         * Phase 2: Contig walking
+         * ======================= */
+        kmer_ext_map.build_contigs(contig_store);
 
-    //print_contigs(argv[1], contig_store, world.rank());
+        //print_contigs(argv[1], contig_store, world.rank());
 
-    gather_contigs(kmer_contig_map, contig_store, world);
+        gather_contigs(kmer_contig_map, contig_store, world);
+    }
 
     if (world.rank() == 0) {
         ContigStore joined_contig_store(k);
