@@ -33,7 +33,7 @@ namespace fs  = boost::filesystem;
 #ifndef LOAD_FROM_UFX
 // Set to 0 if you want to run the kmer-count stage
 // Set to 1 if you want to load from *.ufx.* instead of reading from fastq file
-#define LOAD_FROM_UFX 1
+#define LOAD_FROM_UFX 0
 #endif
 
 static const k_t k = K;
