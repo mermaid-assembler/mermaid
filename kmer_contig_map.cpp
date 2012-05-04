@@ -14,15 +14,14 @@ KmerContigMap::KmerContigMap(k_t k)
 void KmerContigMap::insert(Contig* contig)
 {
     kmer_t kmer = (kmer_t) malloc(kmer_size(k));
-    for (size_t i = 0; i < k; i++)
-        set_base(kmer, i, char2base(contig->s[i]));
+    str2kmer(kmer, contig->s.c_str(), k);
     forward_map->map[kmer] = contig;
-    contig->revcmp();
+
     kmer_t revcmp = (kmer_t) malloc(kmer_size(k));
-    for (size_t i = 0; i < k; i++)
-        set_base(revcmp, i, char2base(contig->s[i]));
+    kmer_a tmp_kmer[kmer_size(k)];
+    str2kmer(tmp_kmer, &contig->s.c_str()[contig->s.size()-k], k);
+    revcmp_kmer(revcmp, tmp_kmer, k);
     revcmp_map->map[revcmp] = contig;
-    contig->revcmp();
 }
 
 void KmerContigMap::fprint_contigs(FILE* outfile, size_t min_contig_len)
