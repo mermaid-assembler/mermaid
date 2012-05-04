@@ -14,33 +14,32 @@ public:
     ContigStore(k_t k);
 
     void add(Contig* contig);
-    void add_to_final_contigs(Contig* contig);
+    //void add_to_final_contigs(Contig* contig);
 
     void print_contigs(FILE* outfile, size_t min_contig_len = MIN_CONTIG_LEN);
 
-    size_t size() { return contigs.map.size(); };
+    //typedef HashMap<kmer_t, Contig*>::map_type_t contig_map_type_t;
+    //typedef contig_map_type_t::iterator iterator;
 
-    typedef HashMap<kmer_t, Contig*>::map_type_t contig_map_type_t;
-    typedef contig_map_type_t::iterator iterator;
+    ///* Find contig by its first k bases */
+    //iterator find(kmer_t kmer, bool& revcmp_found);
+    //iterator begin() { return contigs.map.begin(); };
+    //iterator end() { return contigs.map.end(); };
 
-    /* Find contig by its first k bases */
-    iterator find(kmer_t kmer, bool& revcmp_found);
-    iterator begin() { return contigs.map.begin(); };
-    iterator end() { return contigs.map.end(); };
-
-    /* This is necessary because we have two maps now... */
-    bool is_end(iterator it);
-    void trim();
+    ///* This is necessary because we have two maps now... */
+    //bool is_end(iterator it);
+    //void trim();
 
 protected:
-    // FIXME: Use a densehash instead of a sparsehash
-    HashMap<kmer_t, Contig*> contigs;
-    /* This hashes contigs based on the first k bases of their reverse
-     * complement.  Note that the contigs themselves are not duplicated, we
-     * just have two keys which map to each contig.*/
-    HashMap<kmer_t, Contig*> revmap_contigs;
-    std::vector<Contig*> final_contigs;
+    //// FIXME: Use a densehash instead of a sparsehash
+    //HashMap<kmer_t, Contig*> contigs;
+    ///* This hashes contigs based on the first k bases of their reverse
+    // * complement.  Note that the contigs themselves are not duplicated, we
+    // * just have two keys which map to each contig.*/
+    //HashMap<kmer_t, Contig*> revmap_contigs;
+    //std::vector<Contig*> final_contigs;
 
     k_t k;
+    std::vector<Contig*> contigs;
 };
 #endif /* _CONTIG_STORE_H_ */

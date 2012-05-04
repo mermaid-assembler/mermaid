@@ -171,6 +171,7 @@ void print_contigs(char* outprefix, ContigStore& contig_store, int rank)
     fclose(outfile);
 }
 
+#if 0
 /* Collects contigs on to one process (rank == 0). */
 void gather_contigs(ContigStore& contig_store, mpi::communicator& world)
 {
@@ -181,7 +182,7 @@ void gather_contigs(ContigStore& contig_store, mpi::communicator& world)
         base left_ext;
         base right_ext;
         char s[0];
-    } __attribute__((packed)) contig_info;
+    } __attribute__((packed)) contig_packet_t;
 
     NetHub nethub(world, 0);
 
@@ -197,16 +198,16 @@ void gather_contigs(ContigStore& contig_store, mpi::communicator& world)
                 if (node_done[i]) continue;
 
                 int status;
-                contig_info* cinfo;
+                contig_packet_t* cpacket;
                 size_t size;
-                while ((status = nethub.vrecv(i, (void**) &cinfo, &size)) == 0) {
+                while ((status = nethub.vrecv(i, (void**) &cpacket, &size)) == 0) {
                     Contig* contig = new Contig();
-                    contig->left_ext = cinfo->left_ext;
-                    contig->right_ext = cinfo->right_ext;
-                    contig->s = std::string(cinfo->s, cinfo->size);
+                    contig->left_ext = cpacket->left_ext;
+                    contig->right_ext = cpacket->right_ext;
+                    contig->s = std::string(cpacket->s, cpacket->size);
                     //contig->verify();
                     contig_store.add(contig);
-                    free(cinfo);
+                    free(cpacket);
                 }
 
                 if (status == 1)
@@ -224,14 +225,14 @@ void gather_contigs(ContigStore& contig_store, mpi::communicator& world)
              it++) {
             Contig* c = it->second;
             //c->verify();
-            size_t cinfo_size = sizeof(contig_info) + c->s.size();
-            contig_info* cinfo = (contig_info*) malloc(cinfo_size);
-            cinfo->size = c->s.size();
-            cinfo->left_ext = c->left_ext;
-            cinfo->right_ext = c->right_ext;
-            memcpy(cinfo->s, c->s.c_str(), cinfo->size);
-            nethub.vsend(0, cinfo, cinfo_size);
-            free(cinfo);
+            size_t cpacket_size = sizeof(contig_packet_t) + c->s.size();
+            contig_packet_t* cpacket = (contig_packet_t*) malloc(cpacket_size);
+            cpacket->size = c->s.size();
+            cpacket->left_ext = c->left_ext;
+            cpacket->right_ext = c->right_ext;
+            memcpy(cpacket->s, c->s.c_str(), cpacket->size);
+            nethub.vsend(0, cpacket, cpacket_size);
+            free(cpacket);
         }
         nethub.done();
     }
@@ -277,6 +278,7 @@ void build_contigs(ContigStore& contig_store)
     }
     contig_store.trim();
 }
+#endif
 
 int main(int argc, char* argv[])
 {
@@ -312,7 +314,6 @@ int main(int argc, char* argv[])
     print_ufxs(argv[1], trimmed_kmer_store, world.rank());
 #else
     load_ufxs(argv[1], trimmed_kmer_store, world.rank());
-    print_ufxs(argv[1], trimmed_kmer_store, world.rank());
 #endif
 
     /* =======================
@@ -321,14 +322,14 @@ int main(int argc, char* argv[])
     ContigStore contig_store(k);
     trimmed_kmer_store.build_contigs(contig_store);
 
-    //print_contigs(argv[1], contig_store, world.rank());
+    print_contigs(argv[1], contig_store, world.rank());
 
-    gather_contigs(contig_store, world);
+    //gather_contigs(contig_store, world);
 
-    if (world.rank() == 0) {
-        build_contigs(contig_store);
-        print_contigs(argv[1], contig_store, world.rank());
-    }
+    //if (world.rank() == 0) {
+    //    build_contigs(contig_store);
+    //    print_contigs(argv[1], contig_store, world.rank());
+    //}
 
     return 0;
 }
