@@ -72,7 +72,7 @@ class FastAReader(object):
             read = line.strip()
             if read == '':
                 continue
-            if read[0] == '>':
+            elif read[0] == '>':
                 yield contig
             else:
                 contig += read
