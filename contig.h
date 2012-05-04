@@ -40,8 +40,8 @@ public:
     void verify();
 
     /* Checks whether contigs contains the given kmer. */
-    bool contains(const char* kmer);
-    bool contains_kmer_or_revcmp(const char* kmer);
+    bool contains(const char* kmer_str);
+    bool contains_kmer_or_revcmp(const char* kmer_str);
 
 public:
     uint32_t id;
