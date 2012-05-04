@@ -9,7 +9,7 @@
 using namespace std;
 
 ContigStore::ContigStore(k_t k)
-    : k(k), contigs()
+    : contigs(), k(k)
 {
 }
 

@@ -50,20 +50,6 @@ void KmerContigMap::join_contigs(ContigStore& contig_store)
         walk(contig);
         contig_store.add(contig);
     }
-
-    for (map_type_t::iterator it = revcmp_map->map.begin();
-            it != revcmp_map->map.end();
-            it++) {
-        Contig* contig = it->second;
-
-        if (contig->s.size() == 0) continue;
-
-        walk(contig);
-        contig->revcmp();
-        walk(contig);
-        contig_store.add(contig);
-        contig->revcmp();
-    }
 }
 
 KmerContigMap::map_type_t::iterator KmerContigMap::lookup_kmer(kmer_t kmer, bool& used_revcmp)
