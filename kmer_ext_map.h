@@ -11,7 +11,6 @@ class ContigStore;
 class KmerExtMap {
 public:
     KmerExtMap(k_t k);
-    ~KmerExtMap();
 
     void insert(kmer_t kmer, ext_map_t ext_map);
     void print_ufxs(FILE* outfile);

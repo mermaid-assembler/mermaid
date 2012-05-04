@@ -11,12 +11,6 @@ KmerExtMap::KmerExtMap(k_t k)
             (hash_map_eq_func_t) kmer_eq_K, kmer_size(k));
 }
 
-KmerExtMap::~KmerExtMap()
-{
-    hash_map->map.clear();
-    delete hash_map;
-}
-
 void KmerExtMap::insert(kmer_t kmer, ext_map_t ext_map)
 {
     hash_map->map[kmer] = ext_map;
@@ -100,7 +94,6 @@ void KmerExtMap::build_contigs(ContigStore& contig_store)
         if (!ext_map.valid() || !ext_map.is_uu()) continue;
 
         Contig* contig = new Contig(kmer);
-        free(kmer);
         contig->left_ext = ext_map.left_ext();
         contig->right_ext = ext_map.right_ext();
         walk(contig);
@@ -143,8 +136,6 @@ void KmerExtMap::walk(Contig* contig)
         map_type_t::iterator it = lookup_kmer(kmer, used_revcmp);
         if (it == hash_map->map.end()) break;
 
-        kmer_t next_kmer = it->first;
-        free(next_kmer);
         ext_map_t& ext_map = it->second;
         if (!ext_map.valid() || !ext_map.is_uu()) break;
 
