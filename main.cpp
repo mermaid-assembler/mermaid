@@ -343,8 +343,10 @@ int main(int argc, char* argv[])
     gather_contigs(kmer_contig_map, contig_store, world);
 
     if (world.rank() == 0) {
+        ContigStore joined_contig_store(k);
+        kmer_contig_map.join_contigs(joined_contig_store);
         //build_contigs(contig_store);
-        print_contigs(argv[1], kmer_contig_map, world.rank() + 100);
+        print_contigs(argv[1], joined_contig_store, world.rank() + 100);
     }
 
     return 0;

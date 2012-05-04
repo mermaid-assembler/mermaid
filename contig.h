@@ -33,6 +33,9 @@ public:
     /* Print formatted contig to file. */
     void fprint_fasta(FILE* outfile, size_t textwidth);
 
+    /* Append an overlapping contig. */
+    void append(Contig* next_contig);
+
     /* Checks for badness */
     void verify();
 

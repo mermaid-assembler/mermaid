@@ -92,3 +92,9 @@ void Contig::verify()
         }
     }
 }
+
+void Contig::append(Contig* next_contig)
+{
+    s.append(next_contig->s, k - 1, next_contig->s.size() - (k - 1));
+    right_ext = next_contig->right_ext;
+}
