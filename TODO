@@ -4,3 +4,4 @@
 * lookinto mmap for performance reasons
 * may want to add preproccessing step that uses 'split' to split files into
   small files that fit in memory using mmap
+* For certain Illumina versions, stop reading after seeing a quality score of 2
