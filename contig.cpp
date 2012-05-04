@@ -72,7 +72,7 @@ void Contig::fprint_fasta(FILE* outfile, size_t textwidth)
         fprintf(outfile, "%s\n", substr.c_str());
     }
     string substr = s.substr(i * textwidth, s.size() % textwidth);
-    fprintf(outfile, "%s\n", substr.c_str());
+    if (!substr.empty()) fprintf(outfile, "%s\n", substr.c_str());
 }
 
 void Contig::verify()
