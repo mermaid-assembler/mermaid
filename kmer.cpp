@@ -68,6 +68,14 @@ bool kmer_matches_str(kmer_t kmer, const char* str, k_t len, k_t from)
     return cmp_kmer(kmer, to_match, len, from) == 0;
 }
 
+
+bool kmer_matches_str_or_revcmp(kmer_t kmer, const char* str, k_t len)
+{
+    kmer_a revcmp[kmer_size(len)];
+    revcmp_kmer(revcmp, kmer, len);
+    return kmer_matches_str(kmer, str, len) || cmp_kmer(revcmp, kmer, len) == 0;
+}
+
 void hashlittle2(const void *key, size_t length, uint32_t *pc, uint32_t *pb);
 
 size_t kmer_hash(size_t seed, kmer_t kmer, k_t len)

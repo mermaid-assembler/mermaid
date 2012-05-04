@@ -172,6 +172,7 @@ bool is_canonical_kmer(kmer_t kmer, k_t len);
  * The following are useful debugging functions. NOT meant for production use.
  *****************************************************************************/
 bool kmer_matches_str(kmer_t kmer, const char* str, k_t len, k_t from = 0);
+bool kmer_matches_str_or_revcmp(kmer_t kmer, const char* str, k_t len);
 
 bool validate_kmer(kmer_t kmer, k_t len);
 
