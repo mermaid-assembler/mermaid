@@ -8,9 +8,9 @@
 
 class ContigStore;
 
-class TrimmedKmerStore {
+class KmerExtMap {
 public:
-    TrimmedKmerStore(k_t k);
+    KmerExtMap(k_t k);
 
     void insert(kmer_t kmer, ext_map_t ext_map);
     void print_ufxs(FILE* outfile);

@@ -1,9 +1,9 @@
 #include "config.h"
 #include "contig.h"
-#include "trimmed_kmer_store.h"
+#include "kmer_ext_map.h"
 #include "contig_store.h"
 
-TrimmedKmerStore::TrimmedKmerStore(k_t k)
+KmerExtMap::KmerExtMap(k_t k)
     :k(k), kmer_map(NULL)
 {
     kmer_map = new HashMap<kmer_t, ext_map_t>(INITIAL_CAPACITY, 0,
@@ -11,12 +11,12 @@ TrimmedKmerStore::TrimmedKmerStore(k_t k)
             (hash_map_eq_func_t) kmer_eq_K, kmer_size(k));
 }
 
-void TrimmedKmerStore::insert(kmer_t kmer, ext_map_t ext_map)
+void KmerExtMap::insert(kmer_t kmer, ext_map_t ext_map)
 {
     kmer_map->map[kmer] = ext_map;
 }
 
-void TrimmedKmerStore::print_ufxs(FILE* outfile)
+void KmerExtMap::print_ufxs(FILE* outfile)
 {
     for (map_type_t::iterator it = kmer_map->map.begin();
             it != kmer_map->map.end();
@@ -64,7 +64,7 @@ void TrimmedKmerStore::print_ufxs(FILE* outfile)
     }
 }
 
-void TrimmedKmerStore::load_ufxs(FILE* infile)
+void KmerExtMap::load_ufxs(FILE* infile)
 {
     char kmer_str[k + 1];
     char left_ext;
@@ -83,7 +83,7 @@ void TrimmedKmerStore::load_ufxs(FILE* infile)
     }
 }
 
-void TrimmedKmerStore::build_contigs(ContigStore& contig_store)
+void KmerExtMap::build_contigs(ContigStore& contig_store)
 {
     for (map_type_t::iterator it = kmer_map->map.begin();
             it != kmer_map->map.end();
@@ -103,7 +103,7 @@ void TrimmedKmerStore::build_contigs(ContigStore& contig_store)
     }
 }
 
-TrimmedKmerStore::map_type_t::iterator TrimmedKmerStore::lookup_kmer(kmer_t kmer, bool& used_revcmp)
+KmerExtMap::map_type_t::iterator KmerExtMap::lookup_kmer(kmer_t kmer, bool& used_revcmp)
 {
     map_type_t::iterator it;
     kmer_a revcmp[kmer_size(k)];
@@ -124,7 +124,7 @@ TrimmedKmerStore::map_type_t::iterator TrimmedKmerStore::lookup_kmer(kmer_t kmer
     return it;
 }
 
-void TrimmedKmerStore::walk(Contig* contig)
+void KmerExtMap::walk(Contig* contig)
 {
     kmer_a kmer[kmer_size(k)];
     bool used_revcmp;

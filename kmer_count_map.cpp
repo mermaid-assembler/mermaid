@@ -1,16 +1,16 @@
 #include "config.h"
 #include "kmer.h"
-#include "kmer_store.h"
+#include "kmer_count_map.h"
 #include "utils.h"
 #include "contig_store.h"
-#include "trimmed_kmer_store.h"
+#include "kmer_ext_map.h"
 
 #define FILTER_ON 0
 
 /* FIXME - Change this initial capacity using preprocessing step. */
 static const int INITIAL_CAPACITY = 100000;
 
-KmerStore::KmerStore(k_t k)
+KmerCountMap::KmerCountMap(k_t k)
     : k(k),
     kmer_filter(INITIAL_CAPACITY, 0.001, 0,
             (bloom_filter_hash_func_t) kmer_hash_K),
@@ -21,7 +21,7 @@ KmerStore::KmerStore(k_t k)
             (hash_map_eq_func_t) kmer_eq_K, kmer_size(k));
 }
 
-void KmerStore::insert(qekmer_t* qekmer)
+void KmerCountMap::insert(qekmer_t* qekmer)
 {
 #if FILTER_ON
     if (!kmer_filter.check(qekmer->kmer)) {
@@ -38,7 +38,7 @@ void KmerStore::insert(qekmer_t* qekmer)
 #endif
 }
 
-void KmerStore::trim(TrimmedKmerStore& trimmed_kmer_store)
+void KmerCountMap::trim(KmerExtMap& kmer_ext_map)
 {
     for (map_type_t::iterator it = kmer_map->map.begin();
             it != kmer_map->map.end();
@@ -47,13 +47,13 @@ void KmerStore::trim(TrimmedKmerStore& trimmed_kmer_store)
         ext_map_t ext_map = it->second.ext_map(D_MIN);
 
         if (ext_map.valid())
-            trimmed_kmer_store.insert(kmer, ext_map);
+            kmer_ext_map.insert(kmer, ext_map);
         else
             free(kmer);
     }
 }
 
-KmerStore::~KmerStore()
+KmerCountMap::~KmerCountMap()
 {
     kmer_map->map.clear();
     delete kmer_map;

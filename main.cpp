@@ -10,8 +10,8 @@
 #include "fastq_reader.h"
 #include "nethub.h"
 #include "config.h"
-#include "kmer_store.h"
-#include "trimmed_kmer_store.h"
+#include "kmer_count_map.h"
+#include "kmer_ext_map.h"
 #include "contig.h"
 #include "utils.h"
 #include "lsh.h"
@@ -89,7 +89,7 @@ FastQReader* get_reader(int argc, char* argv[], mpi::communicator& world, k_t k)
     return reader;
 }
 
-void build_store(FastQReader* r, KmerStore& kmer_store, mpi::communicator& world)
+void build_store(FastQReader* r, KmerCountMap& kmer_count_map, mpi::communicator& world)
 {
     NetHub nethub(world, qekmer_size(k));
 
@@ -124,7 +124,7 @@ void build_store(FastQReader* r, KmerStore& kmer_store, mpi::communicator& world
 
             int status;
             while ((status = nethub.recv(i, recv_qekmer)) == 0) {
-                kmer_store.insert(recv_qekmer);
+                kmer_count_map.insert(recv_qekmer);
             }
 
             if (status == 1)
@@ -138,25 +138,25 @@ void build_store(FastQReader* r, KmerStore& kmer_store, mpi::communicator& world
     free(recv_qekmer);
 }
 
-void print_ufxs(const char* outprefix, TrimmedKmerStore& trimmed_kmer_store, int rank)
+void print_ufxs(const char* outprefix, KmerExtMap& kmer_ext_map, int rank)
 {
     stringstream ss;
     ss << outprefix << ".ufx." << rank;
     FILE* outfile = fopen(ss.str().c_str(), "w");
     if (outfile == NULL)
         panic("Could not open file: %s\n", ss.str().c_str());
-    trimmed_kmer_store.print_ufxs(outfile);
+    kmer_ext_map.print_ufxs(outfile);
     fclose(outfile);
 }
 
-void load_ufxs(char* file_prefix, TrimmedKmerStore& trimmed_kmer_store, int rank)
+void load_ufxs(char* file_prefix, KmerExtMap& kmer_ext_map, int rank)
 {
     stringstream ss;
     ss << file_prefix << ".ufx." << rank;
     FILE* infile = fopen(ss.str().c_str(), "r");
     if (infile == NULL)
         panic("Could not open file: %s\n", ss.str().c_str());
-    trimmed_kmer_store.load_ufxs(infile);
+    kmer_ext_map.load_ufxs(infile);
     fclose(infile);
 }
 
@@ -175,7 +175,7 @@ void print_contigs(char* outprefix, ContigStore& contig_store, int rank)
 /* Collects contigs on to one process (rank == 0). */
 void gather_contigs(ContigStore& contig_store, mpi::communicator& world)
 {
-    // TODO: Do we need to free all the kmers in the kmer_store?
+    // TODO: Do we need to free all the kmers in the kmer_count_map?
 
     typedef struct {
         size_t size;
@@ -302,25 +302,25 @@ int main(int argc, char* argv[])
     /* =======================
      * Phase 1: k-mer counting
      * ======================= */
-    TrimmedKmerStore trimmed_kmer_store(k);
+    KmerExtMap kmer_ext_map(k);
 
 #if !LOAD_FROM_UFX
     {
-        KmerStore kmer_store(k);
+        KmerCountMap kmer_count_map(k);
         FastQReader* reader = get_reader(argc - 2, &argv[2], world, k);
-        build_store(reader, kmer_store, world);
-        kmer_store.trim(trimmed_kmer_store);
+        build_store(reader, kmer_count_map, world);
+        kmer_count_map.trim(kmer_ext_map);
     }
-    print_ufxs(argv[1], trimmed_kmer_store, world.rank());
+    print_ufxs(argv[1], kmer_ext_map, world.rank());
 #else
-    load_ufxs(argv[1], trimmed_kmer_store, world.rank());
+    load_ufxs(argv[1], kmer_ext_map, world.rank());
 #endif
 
     /* =======================
      * Phase 2: Contig walking
      * ======================= */
     ContigStore contig_store(k);
-    trimmed_kmer_store.build_contigs(contig_store);
+    kmer_ext_map.build_contigs(contig_store);
 
     print_contigs(argv[1], contig_store, world.rank());
 

@@ -9,18 +9,18 @@
 #include "contig.h"
 #include "contig_store.h"
 
-class TrimmedKmerStore;
+class KmerExtMap;
 
-class KmerStore {
+class KmerCountMap {
 public:
-    KmerStore(k_t k);
-    ~KmerStore();
+    KmerCountMap(k_t k);
+    ~KmerCountMap();
 
     /* Insert qekmer into the kmer hash map. */
     void insert(qekmer_t* qekmer);
     
     /* Trim kmers which don't appear at least D_MIN times. */
-    void trim(TrimmedKmerStore& trimmed_kmer_store);
+    void trim(KmerExtMap& kmer_ext_map);
 
 protected:
     k_t k;
