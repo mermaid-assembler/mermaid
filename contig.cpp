@@ -65,7 +65,7 @@ void Contig::fprintln(FILE* outfile)
 
 void Contig::fprint_fasta(FILE* outfile, size_t textwidth)
 {
-    fprintf(outfile, ">contig %u len %lu\n", id, s.size());
+    fprintf(outfile, ">contig %u len %lu left_ext %c right_ext %c\n", id, s.size(), base2char(left_ext), base2char(right_ext));
     size_t i;
     for (i = 0; i < s.size() / textwidth; i++) {
         string substr = s.substr(i * textwidth, textwidth);
