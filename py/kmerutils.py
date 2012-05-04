@@ -67,18 +67,16 @@ class FastAReader(object):
             contig += read
 
     def contigs(self):
-        while True:
-            contig = ''
-            while True:
-                read = self.f.readline().strip()
-                if read == '':
-                    if contig:
-                        yield contig
-                    return
-                elif read[0] == '>':
-                    break
-                else:
-                    contig += read
+        contig = ''
+        for line in self.f.readlines():
+            read = line.strip()
+            if read == '':
+                continue
+            if read[0] == '>':
+                yield contig
+            else:
+                contig += read
+        if contig != '':
             yield contig
 
 class FastQReader(object):
