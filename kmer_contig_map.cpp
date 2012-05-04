@@ -75,7 +75,6 @@ void KmerContigMap::walk(Contig* contig)
 {
     kmer_a kmer[kmer_size(k)];
     bool used_revcmp;
-    base left_ext;
 
     while (1) {
         contig->get_ext_kmer(kmer);
