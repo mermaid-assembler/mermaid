@@ -2,7 +2,9 @@
 
 import sys
 
-from kmerutils import FastAReader, canonize
+from kmerutils import FastAReader, canonize_cycle
+
+K = 41
 
 def main():
     if len(sys.argv) != 2:
@@ -12,7 +14,7 @@ def main():
     reader = FastAReader(sys.argv[1])
     
     for contig in reader.contigs():
-        print canonize(contig)
+        print canonize_cycle(contig)
 
 if __name__ == '__main__':
     main()

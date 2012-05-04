@@ -2,6 +2,7 @@
 
 import sys
 
+K = 41
 ILLUMINA_QUAL_OFFSET = 64
 Q_MIN = 20
 
@@ -52,6 +53,33 @@ def canonize(kmer):
         return revcmp
     else:
         return kmer
+
+def score_kmer(kmer):
+    score = 0
+    for base in kmer:
+        score = score * 4 + base_ord(base)
+    return score
+
+def rotate_kmer(kmer, num, k = K):
+    rot = kmer
+    for i in range(num):
+        rot = rot[1:] + rot[k - 1]
+    return rot
+
+def canonize_cycle(kmer, k = K):
+    if kmer[:k - 1] == kmer[-(k - 1):]:
+        # It's a cycle
+        score_map = {}
+        for i in range(len(kmer)):
+            rot = rotate_kmer(kmer, i)
+            score_map[score_kmer(rot)] = rot
+        revcmp = revcmp_kmer(kmer)
+        for i in range(len(revcmp)):
+            rot = rotate_kmer(revcmp, i)
+            score_map[score_kmer(rot)] = rot
+        return score_map[sorted(score_map.keys())[0]]
+    else:
+        return canonize(kmer)
 
 class FastAReader(object):
     def __init__(self, fname):
