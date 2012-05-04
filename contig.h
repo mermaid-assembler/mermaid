@@ -41,6 +41,7 @@ public:
 
     /* Checks whether contigs contains the given kmer. */
     bool contains(const char* kmer);
+    bool contains_kmer_or_revcmp(const char* kmer);
 
 public:
     uint32_t id;

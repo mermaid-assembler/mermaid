@@ -100,7 +100,18 @@ void Contig::append(Contig* next_contig)
 }
 
 
-bool Contig::contains(const char* kmer)
+bool Contig::contains(const char* kmer_str)
 {
-    return s.find(string(kmer)) != string::npos;
+    return s.find(string(kmer_str)) != string::npos;
+}
+
+bool Contig::contains_kmer_or_revcmp(const char* kmer_str)
+{
+    kmer_a kmer[kmer_size(k)];
+    str2kmer(kmer, kmer_str, k);
+    kmer_a revcmp[kmer_size(k)];
+    revcmp_kmer(revcmp, kmer, k);
+    char revcmp_str[k + 1];
+    kmer2str(revcmp_str, revcmp, k);
+    return contains(kmer_str) || contains(revcmp_str);
 }
