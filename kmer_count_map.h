@@ -24,8 +24,8 @@ public:
 
 protected:
     k_t k;
-    ScalableBloomFilter kmer_filter;
-    HashMap<kmer_t, qual_counts_t>* kmer_map;
+    ScalableBloomFilter sb_filter;
+    HashMap<kmer_t, qual_counts_t>* hash_map;
 
     typedef HashMap<kmer_t, qual_counts_t>::map_type_t map_type_t;
 };

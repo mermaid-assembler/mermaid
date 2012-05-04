@@ -4,22 +4,22 @@
 #include "contig_store.h"
 
 KmerExtMap::KmerExtMap(k_t k)
-    :k(k), kmer_map(NULL)
+    :k(k), hash_map(NULL)
 {
-    kmer_map = new HashMap<kmer_t, ext_map_t>(INITIAL_CAPACITY, 0,
+    hash_map = new HashMap<kmer_t, ext_map_t>(INITIAL_CAPACITY, 0,
             (hash_map_hash_func_t) kmer_hash_K,
             (hash_map_eq_func_t) kmer_eq_K, kmer_size(k));
 }
 
 void KmerExtMap::insert(kmer_t kmer, ext_map_t ext_map)
 {
-    kmer_map->map[kmer] = ext_map;
+    hash_map->map[kmer] = ext_map;
 }
 
 void KmerExtMap::print_ufxs(FILE* outfile)
 {
-    for (map_type_t::iterator it = kmer_map->map.begin();
-            it != kmer_map->map.end();
+    for (map_type_t::iterator it = hash_map->map.begin();
+            it != hash_map->map.end();
             it++) {
         kmer_t kmer = it->first;
         ext_map_t ext_map = it->second;
@@ -78,15 +78,15 @@ void KmerExtMap::load_ufxs(FILE* infile)
         ext_map_t ext_map;
         ext_map.left = valid_base(left_ext) ? 1 << (uint8_t) char2base(left_ext) : 0;
         ext_map.right = valid_base(right_ext) ? 1 << (uint8_t) char2base(right_ext) : 0;
-        kmer_map->try_insert(kmer);
-        kmer_map->map[kmer] = ext_map;
+        hash_map->try_insert(kmer);
+        hash_map->map[kmer] = ext_map;
     }
 }
 
 void KmerExtMap::build_contigs(ContigStore& contig_store)
 {
-    for (map_type_t::iterator it = kmer_map->map.begin();
-            it != kmer_map->map.end();
+    for (map_type_t::iterator it = hash_map->map.begin();
+            it != hash_map->map.end();
             it++) {
         kmer_t kmer = it->first;
         ext_map_t ext_map = it->second;
@@ -108,15 +108,15 @@ KmerExtMap::map_type_t::iterator KmerExtMap::lookup_kmer(kmer_t kmer, bool& used
     map_type_t::iterator it;
     kmer_a revcmp[kmer_size(k)];
 
-    it = kmer_map->map.find(kmer);
-    if (it != kmer_map->map.end()) {
+    it = hash_map->map.find(kmer);
+    if (it != hash_map->map.end()) {
         used_revcmp = false;
         return it;
     }
 
     revcmp_kmer(revcmp, kmer, k);
-    it = kmer_map->map.find(revcmp);
-    if (it != kmer_map->map.end()) {
+    it = hash_map->map.find(revcmp);
+    if (it != hash_map->map.end()) {
         used_revcmp = true;
         return it;
     }
@@ -134,7 +134,7 @@ void KmerExtMap::walk(Contig* contig)
     while (1) {
         contig->get_ext_kmer(kmer);
         map_type_t::iterator it = lookup_kmer(kmer, used_revcmp);
-        if (it == kmer_map->map.end()) break;
+        if (it == hash_map->map.end()) break;
 
         ext_map_t& ext_map = it->second;
         if (!ext_map.valid() || !ext_map.is_uu()) break;

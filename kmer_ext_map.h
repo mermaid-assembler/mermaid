@@ -25,7 +25,7 @@ protected:
     map_type_t::iterator lookup_kmer(kmer_t kmer, bool& used_revcmp);
 
     k_t k;
-    HashMap<kmer_t, ext_map_t>* kmer_map;
+    HashMap<kmer_t, ext_map_t>* hash_map;
 
     /* FIXME - Change this initial capacity using preprocessing step. */
     static const size_t INITIAL_CAPACITY = 100000;
