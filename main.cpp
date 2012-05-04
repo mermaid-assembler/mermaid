@@ -249,6 +249,10 @@ void gather_contigs(KmerContigMap& kmer_contig_map, ContigStore& contig_store, m
             free(cpacket);
         }
     }
+
+    if (world.rank() == 0)
+        contig_store.contigs.clear();
+
     nethub.done();
 }
 
@@ -317,35 +321,35 @@ int main(int argc, char* argv[])
     /* =======================
      * Phase 1: k-mer counting
      * ======================= */
-    KmerExtMap kmer_ext_map(k);
+    KmerExtMap* kmer_ext_map = new KmerExtMap(k);
+    KmerCountMap* kmer_count_map = new KmerCountMap(k);
+    ContigStore* contig_store = new ContigStore(k);
+    KmerContigMap* kmer_contig_map = new KmerContigMap(k);
+    ContigStore* joined_contig_store = new ContigStore(k);
 
 #if !LOAD_FROM_UFX
-    {
-        KmerCountMap kmer_count_map(k);
-        FastQReader* reader = get_reader(argc - 2, &argv[2], world, k);
-        build_store(reader, kmer_count_map, world);
-        kmer_count_map.trim(kmer_ext_map);
-    }
-    print_ufxs(argv[1], kmer_ext_map, world.rank());
+    FastQReader* reader = get_reader(argc - 2, &argv[2], world, k);
+    build_store(reader, *kmer_count_map, world);
+    kmer_count_map->trim(*kmer_ext_map);
+    delete kmer_count_map;
+    //print_ufxs(argv[1], *kmer_ext_map, world.rank());
 #else
-    load_ufxs(argv[1], kmer_ext_map, world.rank());
+    load_ufxs(argv[1], *kmer_ext_map, world.rank());
 #endif
 
     /* =======================
      * Phase 2: Contig walking
      * ======================= */
-    ContigStore contig_store(k);
-    KmerContigMap kmer_contig_map(k);
-    kmer_ext_map.build_contigs(contig_store);
+    kmer_ext_map->build_contigs(*contig_store);
+    delete kmer_ext_map;
 
-    //print_contigs(argv[1], contig_store, world.rank());
-
-    gather_contigs(kmer_contig_map, contig_store, world);
+    gather_contigs(*kmer_contig_map, *contig_store, world);
+    delete contig_store;
 
     if (world.rank() == 0) {
-        ContigStore joined_contig_store(k);
-        kmer_contig_map.join_contigs(joined_contig_store);
-        print_contigs(argv[1], joined_contig_store, world.rank());
+        kmer_contig_map->join_contigs(*joined_contig_store);
+        delete kmer_contig_map;
+        print_contigs(argv[1], *joined_contig_store, world.rank());
     }
 
     return 0;

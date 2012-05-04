@@ -154,3 +154,16 @@ void KmerExtMap::walk(Contig* contig)
         contig->right_ext = right_ext;
     }
 }
+
+
+KmerExtMap::~KmerExtMap()
+{
+    for (map_type_t::iterator it = hash_map->map.begin();
+            it != hash_map->map.end();
+            it++) {
+        kmer_t kmer = it->first;
+        free(kmer);
+    }
+    hash_map->map.clear();
+    delete hash_map;
+}

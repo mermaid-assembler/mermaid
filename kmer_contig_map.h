@@ -10,6 +10,7 @@
 class KmerContigMap {
 public:
     KmerContigMap(k_t k);
+    ~KmerContigMap();
 
     void insert(Contig* contig);
     void fprint_contigs(FILE* outfile, size_t min_contig_len = MIN_CONTIG_LEN);

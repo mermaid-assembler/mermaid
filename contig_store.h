@@ -12,6 +12,7 @@
 class ContigStore {
 public:
     ContigStore(k_t k);
+    ~ContigStore();
 
     void add(Contig* contig);
     //void add_to_final_contigs(Contig* contig);

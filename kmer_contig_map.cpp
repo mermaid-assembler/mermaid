@@ -94,3 +94,28 @@ void KmerContigMap::walk(Contig* contig)
         next_contig->s.clear();
     }
 }
+
+KmerContigMap::~KmerContigMap()
+{
+    for (map_type_t::iterator it = forward_map->map.begin();
+            it != forward_map->map.end();
+            it++) {
+        kmer_t kmer = it->first;
+        Contig* contig = it->second;
+        free(kmer);
+        if (contig->s.size() == 0)
+            delete contig;
+    }
+
+    for (map_type_t::iterator it = revcmp_map->map.begin();
+            it != revcmp_map->map.end();
+            it++) {
+        kmer_t kmer = it->first;
+        free(kmer);
+    }
+
+    forward_map->map.clear();
+    delete forward_map;
+    revcmp_map->map.clear();
+    delete revcmp_map;
+}
