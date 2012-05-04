@@ -74,6 +74,7 @@ class FastAReader(object):
                 continue
             elif read[0] == '>':
                 yield contig
+                contig = ''
             else:
                 contig += read
         if contig != '':
