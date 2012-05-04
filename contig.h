@@ -26,7 +26,7 @@ public:
     void revcmp(void);
 
     /* Sets kmer to [last k-1 bases of s] + [right_ext] */
-    void next_kmer(kmer_t kmer);
+    void get_ext_kmer(kmer_t kmer);
 
     void fprint(FILE* outfile);
     void fprintln(FILE* outfile);

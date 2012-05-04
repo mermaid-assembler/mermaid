@@ -4,9 +4,14 @@
 #include <boost/cstdint.hpp>
 
 typedef uint32_t k_t;
+typedef uint8_t qual_t;
+typedef uint16_t count_t;   /* FIXME: We don't know if this is large enough for
+                               the kmer counts we may see in the human dataset.
+                             */
 
-const uint8_t Q_MIN = 19;   /* Minimum quality threshold. */
-const uint8_t D_MIN = 10;   /* Minimum number of high-quality extensions needed. */
+
+const qual_t Q_MIN = 19;   /* Minimum quality threshold. */
+const count_t D_MIN = 10;   /* Minimum number of high-quality extensions needed. */
 
 const k_t K = 41;
 

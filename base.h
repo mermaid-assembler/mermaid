@@ -14,7 +14,8 @@ namespace BASE {
     char base2char(base b);
     base inv_base(base b);
     char inv_base(char c);
-    bool validate_base(base b);
+    bool valid_base(base b);
+    bool valid_base(char c);
 }
 
 #endif /* _BASE_H_ */

@@ -10,7 +10,8 @@
 #include "fastq_reader.h"
 #include "nethub.h"
 #include "config.h"
-#include "kmer_count_store.h"
+#include "kmer_store.h"
+#include "trimmed_kmer_store.h"
 #include "contig.h"
 #include "utils.h"
 #include "lsh.h"
@@ -27,10 +28,10 @@ namespace fs  = boost::filesystem;
 
 #define LSH_ON 0
 
-#ifndef KMER_COUNT_ON
-// Set to 0 if you want to load from *.ufx.* instead of reading from fastq file
-// Set to 1 if you want to run the kmer-count stage
-#define KMER_COUNT_ON 1
+#ifndef LOAD_FROM_UFX
+// Set to 0 if you want to run the kmer-count stage
+// Set to 1 if you want to load from *.ufx.* instead of reading from fastq file
+#define LOAD_FROM_UFX 1
 #endif
 
 static const k_t k = K;
@@ -88,7 +89,7 @@ FastQReader* get_reader(int argc, char* argv[], mpi::communicator& world, k_t k)
     return reader;
 }
 
-void build_store(FastQReader* r, KmerCountStore& kmer_store, mpi::communicator& world)
+void build_store(FastQReader* r, KmerStore& kmer_store, mpi::communicator& world)
 {
     NetHub nethub(world, qekmer_size(k));
 
@@ -137,25 +138,25 @@ void build_store(FastQReader* r, KmerCountStore& kmer_store, mpi::communicator& 
     free(recv_qekmer);
 }
 
-void print_ufxs(const char* outprefix, KmerCountStore& kmer_store, int rank)
+void print_ufxs(const char* outprefix, TrimmedKmerStore& trimmed_kmer_store, int rank)
 {
     stringstream ss;
     ss << outprefix << ".ufx." << rank;
     FILE* outfile = fopen(ss.str().c_str(), "w");
     if (outfile == NULL)
         panic("Could not open file: %s\n", ss.str().c_str());
-    kmer_store.print_ufxs(outfile);
+    trimmed_kmer_store.print_ufxs(outfile);
     fclose(outfile);
 }
 
-void load_ufxs(char* file_prefix, KmerCountStore& kmer_store, int rank)
+void load_ufxs(char* file_prefix, TrimmedKmerStore& trimmed_kmer_store, int rank)
 {
     stringstream ss;
     ss << file_prefix << ".ufx." << rank;
     FILE* infile = fopen(ss.str().c_str(), "r");
     if (infile == NULL)
         panic("Could not open file: %s\n", ss.str().c_str());
-    kmer_store.load_ufxs(infile);
+    trimmed_kmer_store.load_ufxs(infile);
     fclose(infile);
 }
 
@@ -173,7 +174,7 @@ void print_contigs(char* outprefix, ContigStore& contig_store, int rank)
 /* Collects contigs on to one process (rank == 0). */
 void gather_contigs(ContigStore& contig_store, mpi::communicator& world)
 {
-    // TODO: Do we need to free all the kmers in the kmer_count_store?
+    // TODO: Do we need to free all the kmers in the kmer_store?
 
     typedef struct {
         size_t size;
@@ -204,7 +205,7 @@ void gather_contigs(ContigStore& contig_store, mpi::communicator& world)
                     contig->right_ext = cinfo->right_ext;
                     contig->s = std::string(cinfo->s, cinfo->size);
                     //contig->verify();
-                    contig_store.add_contig(contig);
+                    contig_store.add(contig);
                     free(cinfo);
                 }
 
@@ -241,7 +242,7 @@ void walk(Contig* contig, ContigStore& contig_store)
     kmer_a kmer[kmer_size(k)];
     bool revcmp_found = false;
     while(true) {
-        contig->next_kmer(kmer);
+        contig->get_ext_kmer(kmer);
         ContigStore::iterator ext = contig_store.find(kmer, revcmp_found);
         if (contig_store.is_end(ext)) break;
 
@@ -299,22 +300,26 @@ int main(int argc, char* argv[])
     /* =======================
      * Phase 1: k-mer counting
      * ======================= */
-    KmerCountStore kmer_store(k);
+    TrimmedKmerStore trimmed_kmer_store(k);
 
-#if KMER_COUNT_ON
-    FastQReader* reader = get_reader(argc - 2, &argv[2], world, k);
-    build_store(reader, kmer_store, world);
-    kmer_store.trim();
-    print_ufxs(argv[1], kmer_store, world.rank());
+#if !LOAD_FROM_UFX
+    {
+        KmerStore kmer_store(k);
+        FastQReader* reader = get_reader(argc - 2, &argv[2], world, k);
+        build_store(reader, kmer_store, world);
+        kmer_store.trim(trimmed_kmer_store);
+    }
+    print_ufxs(argv[1], trimmed_kmer_store, world.rank());
 #else
-    load_ufxs(argv[1], kmer_store, world.rank());
+    load_ufxs(argv[1], trimmed_kmer_store, world.rank());
+    print_ufxs(argv[1], trimmed_kmer_store, world.rank());
 #endif
 
     /* =======================
      * Phase 2: Contig walking
      * ======================= */
     ContigStore contig_store(k);
-    kmer_store.build_contigs(contig_store);
+    trimmed_kmer_store.build_contigs(contig_store);
 
     //print_contigs(argv[1], contig_store, world.rank());
 

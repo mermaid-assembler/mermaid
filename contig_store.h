@@ -13,7 +13,7 @@ class ContigStore {
 public:
     ContigStore(k_t k);
 
-    void add_contig(Contig* contig);
+    void add(Contig* contig);
     void add_to_final_contigs(Contig* contig);
 
     void print_contigs(FILE* outfile, size_t min_contig_len = MIN_CONTIG_LEN);

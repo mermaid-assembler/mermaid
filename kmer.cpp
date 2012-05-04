@@ -109,11 +109,18 @@ bool kmer_eq_K(kmer_t x, kmer_t y)
     return cmp_kmer(x, y, K) == 0;
 }
 
+bool is_canonical_kmer(kmer_t kmer, k_t len)
+{
+    kmer_a revcmp[kmer_size(len)];
+    revcmp_kmer(revcmp, kmer, len);
+    return cmp_kmer(kmer, revcmp, len) <= 0;
+}
+
 bool validate_kmer(kmer_t kmer, k_t len)
 {
     base b;
     for_base_in_kmer(b, kmer, len) {
-        if (!BASE::validate_base(b))
+        if (!BASE::valid_base(b))
             return false;
     } end_for;
     return true;

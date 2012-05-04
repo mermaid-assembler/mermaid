@@ -42,7 +42,7 @@ void Contig::revcmp(void)
     right_ext = inv_base(right_ext);
 }
 
-void Contig::next_kmer(kmer_t kmer)
+void Contig::get_ext_kmer(kmer_t kmer)
 {
     size_t start_idx = s.size() - (k-1);
     for (size_t i = 0; i < k - 1; i++) {

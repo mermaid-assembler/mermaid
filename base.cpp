@@ -51,7 +51,7 @@ namespace BASE {
         }
     }
 
-    bool validate_base(base b)
+    bool valid_base(base b)
     {
         switch (b) {
             case A:
@@ -59,7 +59,20 @@ namespace BASE {
             case G:
             case T:
             //case N:
-            //    return true;
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    bool valid_base(char c)
+    {
+        switch (c) {
+            case 'A':
+            case 'C':
+            case 'G':
+            case 'T':
+                return true;
             default:
                 return false;
         }

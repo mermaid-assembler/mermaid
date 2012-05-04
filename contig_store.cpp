@@ -22,7 +22,7 @@ ContigStore::ContigStore(k_t k)
 {
 }
 
-void ContigStore::add_contig(Contig* contig)
+void ContigStore::add(Contig* contig)
 {
     kmer_t kmer = (kmer_t) malloc(kmer_size(k));
     str2kmer(kmer, contig->s.c_str(), k);
