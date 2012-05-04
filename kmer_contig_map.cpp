@@ -80,11 +80,8 @@ void KmerContigMap::walk(Contig* contig)
     while (1) {
         contig->get_ext_kmer(kmer);
         map_type_t::iterator it = lookup_kmer(kmer, used_revcmp);
-        if (!used_revcmp) {
-            if (it == forward_map->map.end()) break;
-        } else {
-            if (it == revcmp_map->map.end()) break;
-        }
+        if (it == forward_map->map.end() || it == revcmp_map->map.end())
+            break;
 
         Contig*& next_contig = it->second;
         if (next_contig == contig || next_contig->s.size() == 0) break;
