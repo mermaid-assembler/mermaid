@@ -1,6 +1,6 @@
 #include "config.h"
 #include "kmer.h"
-#include "kmer_count_store.h"
+#include "kmer_store.h"
 #include "utils.h"
 #include "contig_store.h"
 
@@ -9,7 +9,7 @@
 /* FIXME - Change this initial capacity using preprocessing step. */
 static const int INITIAL_CAPACITY = 100000;
 
-KmerCountStore::KmerCountStore(k_t k)
+KmerStore::KmerStore(k_t k)
     : k(k),
     kmer_filter(INITIAL_CAPACITY, 0.001, 0,
             (bloom_filter_hash_func_t) kmer_hash_K),
@@ -20,7 +20,7 @@ KmerCountStore::KmerCountStore(k_t k)
             (hash_map_eq_func_t) kmer_eq_K, kmer_size(k));
 }
 
-void KmerCountStore::insert(qekmer_t* qekmer)
+void KmerStore::insert(qekmer_t* qekmer)
 {
 #if FILTER_ON
     if (!kmer_filter.check(qekmer->kmer)) {
@@ -52,7 +52,7 @@ static ext_map_t get_ext_map(qual_counts_t& qual_counts)
     return ext_map;
 }
 
-void KmerCountStore::trim()
+void KmerStore::trim()
 {
     contig_map = new HashMap<kmer_t, kmer_info_t>(INITIAL_CAPACITY, 0,
             (hash_map_hash_func_t) kmer_hash_K,
@@ -78,7 +78,7 @@ void KmerCountStore::trim()
     counts_map = NULL;
 }
 
-void KmerCountStore::print_ufxs(FILE* outfile)
+void KmerStore::print_ufxs(FILE* outfile)
 {
     if (contig_map == NULL) {
         panic("You have not called trim on the kmer count store\n");
@@ -165,7 +165,7 @@ bool is_canonical_kmer(kmer_t kmer, k_t k)
 }
 
 /* Move this some place neater */
-void KmerCountStore::load_ufxs(FILE* infile)
+void KmerStore::load_ufxs(FILE* infile)
 {
     char kmer_str[k + 1];
     char left_ext;
@@ -212,7 +212,7 @@ static base ext_map_side_to_base(uint8_t side)
     panic("Given ext_map side didn't have any bits set in %s\n", __func__);
 }
 
-KmerCountStore::contig_map_type_t::iterator KmerCountStore::get_next_kmer(kmer_t kmer, bool& revcmp_found)
+KmerStore::contig_map_type_t::iterator KmerStore::get_next_kmer(kmer_t kmer, bool& revcmp_found)
 {
     contig_map_type_t::iterator it;
     kmer_a revcmp[kmer_size(k)];
@@ -233,7 +233,7 @@ KmerCountStore::contig_map_type_t::iterator KmerCountStore::get_next_kmer(kmer_t
     return it;
 }
 
-void KmerCountStore::walk(Contig* contig)
+void KmerStore::walk(Contig* contig)
 {
     kmer_a kmer[kmer_size(k)];
     bool revcmp_found;
@@ -267,7 +267,7 @@ void KmerCountStore::walk(Contig* contig)
 }
 
 #if 0
-int32_t KmerCountStore::build_contig(Contig* contig, kmer_t beg_kmer, kmer_info_t& beg_kmer_info)
+int32_t KmerStore::build_contig(Contig* contig, kmer_t beg_kmer, kmer_info_t& beg_kmer_info)
 {
     kmer_a subcontig[kmer_size(SUBCONTIG_LEN)];
     kmer_a cur_kmer[kmer_size(k)];
@@ -373,7 +373,7 @@ int32_t KmerCountStore::build_contig(Contig* contig, kmer_t beg_kmer, kmer_info_
 }
 #endif
 
-void KmerCountStore::build_contigs(ContigStore& contig_store)
+void KmerStore::build_contigs(ContigStore& contig_store)
 {
     for (contig_map_type_t::iterator it = contig_map->map.begin();
             it != contig_map->map.end();
@@ -400,7 +400,7 @@ void KmerCountStore::build_contigs(ContigStore& contig_store)
 /* TODO - Version of build_contig which doesn't constantly copy the next kmer
  * into a temporary buffer. */
 #if 0
-void KmerCountStore::build_contig(int32_t contig_idx, Contig* contig, const kmer_t& beg_kmer, kmer_info_t& beg_kmer_info)
+void KmerStore::build_contig(int32_t contig_idx, Contig* contig, const kmer_t& beg_kmer, kmer_info_t& beg_kmer_info)
 {
     if (!can_use_in_contig(beg_kmer_info))
         return;

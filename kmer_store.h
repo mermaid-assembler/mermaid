@@ -1,5 +1,5 @@
-#ifndef _KMER_COUNT_STORE_H_
-#define _KMER_COUNT_STORE_H_
+#ifndef _KMER_STORE_H_
+#define _KMER_STORE_H_
 
 #include <vector>
 
@@ -29,12 +29,12 @@ typedef struct {
     bool next_revcmp;
 } next_contig_info_t;
 
-class KmerCountStore {
+class KmerStore {
 public:
     typedef HashMap<kmer_t, qual_counts_t>::map_type_t counts_map_type_t;
     typedef HashMap<kmer_t, kmer_info_t>::map_type_t contig_map_type_t;
 
-    KmerCountStore(k_t k);
+    KmerStore(k_t k);
 
     /* Insert qekmer into the kmer hash map. */
     void insert(qekmer_t* qekmer);
@@ -65,4 +65,4 @@ protected:
                                                        go contigs */
 };
 
-#endif /* _KMER_COUNT_STORE_H_ */
+#endif /* _KMER_STORE_H_ */
