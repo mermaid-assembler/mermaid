@@ -1,33 +1,33 @@
 #include "kmer_contig_map.h"
 
 KmerContigMap::KmerContigMap(k_t k)
-    : k(k), forward_map(NULL), revcmp_map(NULL)
+    : k(k),
+    forward_map(INITIAL_CAPACITY, 0,
+            (hash_map_hash_func_t) kmer_hash_K,
+            (hash_map_eq_func_t) kmer_eq_K, kmer_size(k)),
+    revcmp_map(INITIAL_CAPACITY, 0,
+            (hash_map_hash_func_t) kmer_hash_K,
+            (hash_map_eq_func_t) kmer_eq_K, kmer_size(k))
 {
-    forward_map = new HashMap<kmer_t, Contig*>(INITIAL_CAPACITY, 0,
-            (hash_map_hash_func_t) kmer_hash_K,
-            (hash_map_eq_func_t) kmer_eq_K, kmer_size(k));
-    revcmp_map = new HashMap<kmer_t, Contig*>(INITIAL_CAPACITY, 0,
-            (hash_map_hash_func_t) kmer_hash_K,
-            (hash_map_eq_func_t) kmer_eq_K, kmer_size(k));
 }
 
 void KmerContigMap::insert(Contig* contig)
 {
     kmer_t kmer = (kmer_t) malloc(kmer_size(k));
     str2kmer(kmer, contig->s.c_str(), k);
-    forward_map->map[kmer] = contig;
+    forward_map.map[kmer] = contig;
 
     kmer_t revcmp = (kmer_t) malloc(kmer_size(k));
     kmer_a tmp_kmer[kmer_size(k)];
     str2kmer(tmp_kmer, &contig->s.c_str()[contig->s.size()-k], k);
     revcmp_kmer(revcmp, tmp_kmer, k);
-    revcmp_map->map[revcmp] = contig;
+    revcmp_map.map[revcmp] = contig;
 }
 
 void KmerContigMap::fprint_contigs(FILE* outfile, size_t min_contig_len)
 {
-    for (map_type_t::iterator it = forward_map->map.begin();
-            it != forward_map->map.end();
+    for (map_type_t::iterator it = forward_map.map.begin();
+            it != forward_map.map.end();
             it++)
     {
         Contig* contig = it->second;
@@ -38,8 +38,8 @@ void KmerContigMap::fprint_contigs(FILE* outfile, size_t min_contig_len)
 
 void KmerContigMap::join_contigs(ContigStore& contig_store)
 {
-    for (map_type_t::iterator it = forward_map->map.begin();
-            it != forward_map->map.end();
+    for (map_type_t::iterator it = forward_map.map.begin();
+            it != forward_map.map.end();
             it++) {
         Contig* contig = it->second;
 
@@ -56,14 +56,14 @@ KmerContigMap::map_type_t::iterator KmerContigMap::lookup_kmer(kmer_t kmer, bool
 {
     map_type_t::iterator it;
 
-    it = forward_map->map.find(kmer);
-    if (it != forward_map->map.end()) {
+    it = forward_map.map.find(kmer);
+    if (it != forward_map.map.end()) {
         used_revcmp = false;
         return it;
     }
 
-    it = revcmp_map->map.find(kmer);
-    if (it != revcmp_map->map.end()) {
+    it = revcmp_map.map.find(kmer);
+    if (it != revcmp_map.map.end()) {
         used_revcmp = true;
         return it;
     }
@@ -79,7 +79,7 @@ void KmerContigMap::walk(Contig* contig)
     while (1) {
         contig->get_ext_kmer(kmer);
         map_type_t::iterator it = lookup_kmer(kmer, used_revcmp);
-        if (it == forward_map->map.end() || it == revcmp_map->map.end())
+        if (it == forward_map.map.end() || it == revcmp_map.map.end())
             break;
 
         Contig*& next_contig = it->second;
@@ -101,8 +101,8 @@ void KmerContigMap::walk(Contig* contig)
 
 KmerContigMap::~KmerContigMap()
 {
-    for (map_type_t::iterator it = forward_map->map.begin();
-            it != forward_map->map.end();
+    for (map_type_t::iterator it = forward_map.map.begin();
+            it != forward_map.map.end();
             it++) {
         kmer_t kmer = it->first;
         Contig* contig = it->second;
@@ -111,15 +111,10 @@ KmerContigMap::~KmerContigMap()
             delete contig;
     }
 
-    for (map_type_t::iterator it = revcmp_map->map.begin();
-            it != revcmp_map->map.end();
+    for (map_type_t::iterator it = revcmp_map.map.begin();
+            it != revcmp_map.map.end();
             it++) {
         kmer_t kmer = it->first;
         free(kmer);
     }
-
-    forward_map->map.clear();
-    delete forward_map;
-    revcmp_map->map.clear();
-    delete revcmp_map;
 }
