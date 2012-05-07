@@ -88,7 +88,11 @@ void KmerContigMap::walk(Contig* contig)
         if (used_revcmp)
             next_contig->revcmp();
 
-        if (!contig->check_next_left_ext(next_contig->left_ext)) break;
+        if (!contig->check_next_left_ext(next_contig->left_ext)) {
+            if (used_revcmp)
+                next_contig->revcmp();
+            break;
+        }
 
         contig->append(next_contig);
         next_contig->s.clear();
