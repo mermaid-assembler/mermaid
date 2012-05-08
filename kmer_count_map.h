@@ -14,7 +14,6 @@ class KmerExtMap;
 class KmerCountMap {
 public:
     KmerCountMap(k_t k);
-    ~KmerCountMap();
 
     /* Insert qekmer into the kmer hash map. */
     void insert(qekmer_t* qekmer);
@@ -27,7 +26,7 @@ protected:
 
     k_t k;
     ScalableBloomFilter sb_filter;
-    HashMap<kmer_t, qual_counts_t>* hash_map;
+    HashMap<kmer_t, qual_counts_t> hash_map;
 
     /* FIXME - Change this initial capacity using preprocessing step. */
     static const int INITIAL_CAPACITY = 100000;
