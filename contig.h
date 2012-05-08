@@ -15,6 +15,7 @@ public:
 
     Contig();
     Contig(kmer_t init_kmer);
+    Contig(Contig* contig);
 
     /* Checks the given base 'next_left_ext' against the s[size - k] to see if
      * they're the same. If the kmer overlaps properly, these bases should be

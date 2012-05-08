@@ -26,6 +26,12 @@ Contig::Contig(kmer_t init_kmer)
     s = kmer_str;
 }
 
+Contig::Contig(Contig* contig)
+    : id(id_generator++), s(contig->s), left_ext(contig->left_ext),
+    right_ext(contig->right_ext)
+{
+}
+
 bool Contig::check_next_left_ext(base next_left_ext)
 {
     return char2base(s[s.size() - k]) == next_left_ext;

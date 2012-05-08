@@ -41,14 +41,15 @@ void KmerContigMap::join_contigs(ContigStore& contig_store)
     for (map_type_t::iterator it = forward_map.map.begin();
             it != forward_map.map.end();
             it++) {
-        Contig* contig = it->second;
+        if (it->second->s.size() == 0) continue;
 
-        if (contig->s.size() == 0) continue;
-
+        Contig* contig = new Contig(it->second);
         walk(contig);
         contig->revcmp();
         walk(contig);
         contig_store.add(contig);
+
+        it->second->s.clear();
     }
 }
 
