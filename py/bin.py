@@ -2,6 +2,7 @@
 
 import sys
 import random
+import time
 
 import kmerutils
 
@@ -11,7 +12,11 @@ NUM_BINS = 16
 random.seed(1073847)
 SEEDS = [random.randint(0, sys.maxint) for i in range(4)]
 
+global_timer = 0
+
 def my_hash(kmer):
+    # Time: 0.092s
+    # Locality: 7.23%
     def naive_hash(kmer):
         return {
                 'AA':  0,
@@ -30,9 +35,15 @@ def my_hash(kmer):
                 'TC': 13,
                 'TG': 14,
                 'TT': 15,
-                }[kmer[:2].replace('N', 'A')]
+                }[kmer[:2]]
+
+    # Time: 0.070s
+    # Locality: 7.67%
     def naive_hash2(kmer):
         return hash(kmer) % NUM_BINS
+
+    # Time: 43.869s
+    # Locality: 94.13%
     def lsh(kmer):
         # Kind of bullshitting my way through this from info here:
         # http://nlp.stanford.edu/IR-book/html/htmledition/near-duplicates-and-shingling-1.html
@@ -56,7 +67,24 @@ def my_hash(kmer):
             value *= 2
             value += result % 2
         return value
-    return lsh(kmer)
+
+    # Time: 13.089s
+    # Locality: 94.14%
+    def lsh2(kmer):
+        def permute(x):
+            return (2654435761 * x) % (2**32)
+        shingle_len = 16
+        shingles = []
+        num_shingles = len(kmer)-shingle_len+1
+        global global_timer
+        start_time = time.clock()
+        for i in range(num_shingles):
+            shingles.append(kmerutils.int_value(kmer[i:i+6]))
+        global_timer += time.clock() - start_time
+        value = min([permute(x) for x in shingles])
+        return value
+
+    return lsh2(kmer) % 16
 
 def main():
     if len(sys.argv) != 2:
@@ -90,6 +118,7 @@ def main():
 
     print("average locality: %5.2f" % (100.0 * sum(counts)/sum([len(bin) for bin in bins])))
 
+    print("global timer: %f" % global_timer)
 
 if __name__ == '__main__':
     main()
