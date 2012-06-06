@@ -28,7 +28,7 @@ namespace fs  = boost::filesystem;
 #define KMER_SIZE_TAG 1
 #define DONE_TAG 2
 
-#define LSH_ON 1
+#define LSH_ON 0
 
 #ifndef LOAD_FROM_UFX
 // Set to 0 if you want to run the kmer-count stage
@@ -187,11 +187,12 @@ void print_contigs(char* outprefix, KmerContigMap& kmer_contig_map, int rank)
 /* Collects contigs on to one process (rank == 0). */
 void gather_contigs(KmerContigMap& kmer_contig_map, ContigStore& contig_store, mpi::communicator& world, const char* outprefix)
 {
-    stringstream ss;
-    ss << outprefix << ".contig-lengths." << world.rank();
-    FILE* outfile = fopen(ss.str().c_str(), "w");
-    if (outfile == NULL)
-        panic("Could not open file: %s\n", ss.str().c_str());
+    // TODO: Make the contig counting neater
+    //stringstream ss;
+    //ss << outprefix << ".contig-lengths." << world.rank();
+    //FILE* outfile = fopen(ss.str().c_str(), "w");
+    //if (outfile == NULL)
+    //    panic("Could not open file: %s\n", ss.str().c_str());
     // TODO: Do we need to free all the kmers in the kmer_count_map?
 
     typedef struct {
@@ -241,7 +242,8 @@ void gather_contigs(KmerContigMap& kmer_contig_map, ContigStore& contig_store, m
             it++) {
         Contig* c = *it;
         //c->verify();
-        fprintf(outfile, "%lu\n", c->s.size());
+        // TODO: Make the contig counting neater
+        //fprintf(outfile, "%lu\n", c->s.size());
         if (world.rank() == 0) {
             kmer_contig_map.insert(c);
         } else {
@@ -260,9 +262,9 @@ void gather_contigs(KmerContigMap& kmer_contig_map, ContigStore& contig_store, m
         contig_store.contigs.clear();
 
     nethub.done();
-    exit(0);
 
-    fclose(outfile);
+    // TODO: Make the contig counting neater
+    //fclose(outfile);
 }
 
 #if 0
