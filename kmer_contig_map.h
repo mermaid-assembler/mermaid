@@ -10,6 +10,7 @@
 class KmerContigMap {
 public:
     KmerContigMap(k_t k);
+    ~KmerContigMap();
 
     void insert(Contig* contig);
     void fprint_contigs(FILE* outfile, size_t min_contig_len = MIN_CONTIG_LEN);
@@ -23,8 +24,8 @@ protected:
     map_type_t::iterator lookup_kmer(kmer_t kmer, bool& used_revcmp);
 
     k_t k;
-    HashMap<kmer_t, Contig*>* forward_map;
-    HashMap<kmer_t, Contig*>* revcmp_map;
+    HashMap<kmer_t, Contig*> forward_map;
+    HashMap<kmer_t, Contig*> revcmp_map;
 
     /* FIXME - Change this initial capacity using preprocessing step. */
     static const int INITIAL_CAPACITY = 100000;
