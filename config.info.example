@@ -1,0 +1,6 @@
+; Configuration file for specifying (or overwriting) values for Mermaid
+
+defaults
+{
+    ; Updates will change defaults specified in config.h.
+}

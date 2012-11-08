@@ -26,7 +26,7 @@ void ContigStore::fprint_contigs(FILE* outfile, size_t min_contig_len)
     {
         Contig* contig = *it;
         if (contig->s.size() >= min_contig_len)
-            contig->fprint_fasta(outfile, FASTA_TEXTWIDTH);
+            contig->fprint_fasta(outfile, Config::FASTA_TEXTWIDTH);
     }
 }
 

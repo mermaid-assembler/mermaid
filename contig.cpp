@@ -10,7 +10,7 @@
 using namespace std;
 
 uint32_t Contig::id_generator = 0;
-k_t Contig::k = K;      /* TODO - Set this dynamically. */
+k_t Contig::k = Config::K;      /* TODO - Set this dynamically. */
 size_t Contig::seed = 0;
 
 Contig::Contig()

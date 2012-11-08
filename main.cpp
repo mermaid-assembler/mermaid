@@ -36,7 +36,7 @@ namespace fs  = boost::filesystem;
 #define LOAD_FROM_UFX 0
 #endif
 
-static const k_t k = K;
+static const k_t k = Config::K;
 
 int get_kmer_bin(qekmer_t* qekmer, k_t k, int world_size)
 {
@@ -54,7 +54,7 @@ int get_kmer_bin(qekmer_t* qekmer, k_t k, int world_size)
  */
 bool check_qekmer_qual(qekmer_t* qekmer, k_t k)
 {
-    if (qekmer->lqual <= Q_MIN && qekmer->rqual <= Q_MIN)
+    if (qekmer->lqual <= Config::Q_MIN && qekmer->rqual <= Config::Q_MIN)
         return false;
 
     return true;
@@ -316,9 +316,11 @@ int main(int argc, char* argv[])
     mpi::communicator world;
 
     if (argc < 3) {
-        printf("hammer outfile infile...\n");
+        printf("mermaid outfile infile...\n");
         exit(1);
     }
+
+    Config::load_config("config.info");
 
     //if (world.rank() == 0)
     //{
