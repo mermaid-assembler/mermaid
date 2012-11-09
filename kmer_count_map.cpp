@@ -25,9 +25,9 @@ void KmerCountMap::insert(qekmer_t* qekmer)
     } else {
 #endif
         hash_map.try_insert(qekmer->kmer);
-        if (qekmer->lqual > Q_MIN)
+        if (qekmer->lqual > Config::Q_MIN)
             hash_map.map[qekmer->kmer].lquals[qekmer->exts.left]++;
-        if (qekmer->rqual > Q_MIN)
+        if (qekmer->rqual > Config::Q_MIN)
             hash_map.map[qekmer->kmer].rquals[qekmer->exts.right]++;
 #if FILTER_ON
     }
@@ -40,7 +40,7 @@ void KmerCountMap::trim(KmerExtMap& kmer_ext_map)
             it != hash_map.map.end();
             it++) {
         kmer_t kmer = it->first;
-        ext_map_t ext_map = it->second.ext_map(D_MIN);
+        ext_map_t ext_map = it->second.ext_map(Config::D_MIN);
 
         if (ext_map.valid())
             kmer_ext_map.insert(kmer, ext_map);

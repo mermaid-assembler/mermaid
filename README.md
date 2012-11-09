@@ -2,9 +2,9 @@ Prerequisites
 -------------
 
 MERmaid only has three main dependencies:
-* Boost C++: MPI and filesystem
+* Boost C++: Base, MPI and filesystem
 * An MPI framework: We only test it with openmpi
-* Google (sparsehash)[http://code.google.com/p/sparsehash]
+* Google [sparsehash](http://code.google.com/p/sparsehash)
 
 Currently, we are only running it on 64-bit Linux. Mac OS X is known to have
 problems building.
