@@ -28,6 +28,10 @@ The outputs will be
 * A file containing all the contigs. This will be named 
   output-file-prefix.contigs.0
 
+Mermaid will override default configurations if they are specified in
+"mermaid.conf". Copy mermaid.conf.example to mermaid.conf and adjust parameter
+values to override defaults.
+
 TODO
 ----
 
