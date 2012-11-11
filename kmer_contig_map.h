@@ -13,7 +13,7 @@ public:
     ~KmerContigMap();
 
     void insert(Contig* contig);
-    void fprint_contigs(FILE* outfile, size_t min_contig_len = MIN_CONTIG_LEN);
+    void fprint_contigs(FILE* outfile, size_t min_contig_len = Config::MIN_CONTIG_LEN);
 
     void join_contigs(ContigStore& contig_store);
 

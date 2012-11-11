@@ -2,9 +2,9 @@ Prerequisites
 -------------
 
 MERmaid only has three main dependencies:
-* Boost C++: MPI and filesystem
+* Boost C++: Base, MPI and filesystem
 * An MPI framework: We only test it with openmpi
-* Google (sparsehash)[http://code.google.com/p/sparsehash]
+* Google [sparsehash](http://code.google.com/p/sparsehash)
 
 Currently, we are only running it on 64-bit Linux. Mac OS X is known to have
 problems building.
@@ -27,6 +27,10 @@ The outputs will be
   phase. These will be named output-file-prefix.ufx.<num>
 * A file containing all the contigs. This will be named 
   output-file-prefix.contigs.0
+
+Mermaid will override default configurations if they are specified in
+"mermaid.conf". Copy mermaid.conf.example to mermaid.conf and adjust parameter
+values to override defaults.
 
 TODO
 ----

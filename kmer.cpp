@@ -99,12 +99,12 @@ size_t kmer_hash(size_t seed, kmer_t kmer, k_t len)
 
 size_t kmer_hash_K(size_t seed, kmer_t kmer)
 {
-    return kmer_hash(seed, kmer, K);
+    return kmer_hash(seed, kmer, Config::K);
 }
 
 size_t kmer_hash_simple(kmer_t kmer)
 {
-    return kmer_hash(0, kmer, K);
+    return kmer_hash(0, kmer, Config::K);
 }
 
 bool kmer_eq(kmer_t x, kmer_t y, k_t len)
@@ -114,7 +114,7 @@ bool kmer_eq(kmer_t x, kmer_t y, k_t len)
 
 bool kmer_eq_K(kmer_t x, kmer_t y)
 {
-    return cmp_kmer(x, y, K) == 0;
+    return cmp_kmer(x, y, Config::K) == 0;
 }
 
 bool is_canonical_kmer(kmer_t kmer, k_t len)
