@@ -320,7 +320,7 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    Config::load_config("mermaid.conf.example");
+    Config::load_config("mermaid.conf");
 
     //if (world.rank() == 0)
     //{
