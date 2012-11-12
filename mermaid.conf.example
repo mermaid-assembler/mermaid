@@ -1,0 +1,12 @@
+; Configuration file for specifying (or overwriting) values for Mermaid
+; Follows .info syntax
+
+defaults
+{
+    ; Updates will change defaults specified in config.h.
+    Q_MIN "19"
+    D_MIN "10"
+    K "41"
+    MIN_CONTIG_LEN "82"
+    FASTA_TEXTWIDTH "50"
+}

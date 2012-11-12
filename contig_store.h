@@ -17,7 +17,7 @@ public:
     void add(Contig* contig);
     //void add_to_final_contigs(Contig* contig);
 
-    void fprint_contigs(FILE* outfile, size_t min_contig_len = MIN_CONTIG_LEN);
+    void fprint_contigs(FILE* outfile, size_t min_contig_len = Config::MIN_CONTIG_LEN);
 
     //typedef HashMap<kmer_t, Contig*>::map_type_t contig_map_type_t;
     //typedef contig_map_type_t::iterator iterator;
